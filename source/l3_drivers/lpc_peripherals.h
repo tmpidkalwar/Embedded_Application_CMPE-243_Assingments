@@ -3,7 +3,7 @@
 /**
  * @file
  * This file provides API to turn on peripheral power, and their interrupts
- * Turning off power and disabling peripherals is a YAGNI so do not be suprised of the omission
+ * Turning off power and disabling interrupts is a YAGNI so do not be suprised of the omission
  */
 
 /**
@@ -11,6 +11,7 @@
  * Check UM10562.pdf, Chapter 5: NVIC
  *
  * @note If you add more peripherals here, you will have to modify lpc_peripherals.c too
+ * @warning these need to map to the same values as lpc40xx.h 'IRQn_Type'
  /
 typedef enum {
   LPC_PERIPHERAL__UART0 = 5,
