@@ -195,9 +195,7 @@ void uart__init(uart_e uart, uint32_t peripheral_clock, uint32_t baud_rate) {
   }
 }
 
-bool uart__is_initialized(uart_e uart) {
-  return (0 != uarts[uart].registers->LCR);
-}
+bool uart__is_initialized(uart_e uart) { return (0 != uarts[uart].registers->LCR); }
 
 bool uart__enable_queues(uart_e uart, QueueHandle_t queue_receive, QueueHandle_t queue_transmit) {
   bool status = false;
