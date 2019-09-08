@@ -1,7 +1,7 @@
 import os
 
 CORE = "cortex-m4"
-OPTIMIZATION_LEVEL = "s"
+OPTIMIZATION_LEVEL = "0"
 
 
 """
