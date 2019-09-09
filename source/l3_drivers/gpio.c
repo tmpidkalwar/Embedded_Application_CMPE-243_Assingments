@@ -4,9 +4,7 @@
 
 static const LPC_GPIO_TypeDef *gpio_memory_map[] = {LPC_GPIO1, LPC_GPIO2, LPC_GPIO3, LPC_GPIO4, LPC_GPIO5};
 
-static LPC_GPIO_TypeDef *gpio__get_struct(gpio_s gpio) {
-  return (LPC_GPIO_TypeDef *)gpio_memory_map[gpio.port_number];
-}
+static LPC_GPIO_TypeDef *gpio__get_struct(gpio_s gpio) { return (LPC_GPIO_TypeDef *)gpio_memory_map[gpio.port_number]; }
 
 static uint32_t gpio__get_pin_mask(gpio_s gpio) { return (UINT32_C(1) << gpio.pin_number); }
 
@@ -47,6 +45,15 @@ void gpio__set_as_input(gpio_s gpio) { gpio__get_struct(gpio)->DIR &= ~gpio__get
 
 void gpio__set_as_output(gpio_s gpio) { gpio__get_struct(gpio)->DIR |= gpio__get_pin_mask(gpio); }
 
+bool gpio__get(gpio_s gpio) { return (gpio__get_struct(gpio)->PIN & gpio__get_pin_mask(gpio)); }
 void gpio__set(gpio_s gpio) { gpio__get_struct(gpio)->SET = gpio__get_pin_mask(gpio); }
-
 void gpio__reset(gpio_s gpio) { gpio__get_struct(gpio)->CLR = gpio__get_pin_mask(gpio); }
+
+void gpio__toggle(gpio_s gpio) {
+  // Avoiding XOR logic to make it thread safe
+  if (gpio__get(gpio)) {
+    gpio__reset(gpio);
+  } else {
+    gpio__set(gpio);
+  }
+}

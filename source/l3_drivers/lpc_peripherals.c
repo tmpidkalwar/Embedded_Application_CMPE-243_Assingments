@@ -2,16 +2,23 @@
 
 #include "lpc40xx.h"
 
+// clang-format off
 /**
  * The enumeration values correspond to the peripherals' power-on bit
  * Check UM10562.pdf, Chapter 3: System and clock control
  */
 static const uint8_t lpc_peripheral_pconp_bit_map[] = {
+    [LPC_PERIPHERAL__TIMER0] = 1,
+    [LPC_PERIPHERAL__TIMER1] = 2,
+    [LPC_PERIPHERAL__TIMER2] = 22,
+    [LPC_PERIPHERAL__TIMER3] = 23,
+
     [LPC_PERIPHERAL__UART0] = 3,
     [LPC_PERIPHERAL__UART1] = 4,
     [LPC_PERIPHERAL__UART2] = 24,
     [LPC_PERIPHERAL__UART3] = 25,
 };
+// clang-format on
 
 /// An unregistered interrupt handler is a forever loop
 static void lpc_peripheral__halt_handler(void) {
@@ -20,10 +27,14 @@ static void lpc_peripheral__halt_handler(void) {
 }
 
 /**
- * Map of the user ISR registrations
+ * Map of the user ISR registrations.
+ * This is our own memory map that is used by lpc_peripheral__interrupt_dispatcher() and it is not the real ISR vector
+ * The real ISR vector registers lpc_peripheral__interrupt_dispatcher() for all peripheral ISR and we dispatch user
+ * registered ISR here.
+ *
  * These will call the halt handler unless user changes their ISR slot by calling lpc_peripheral__enable_interrupt()
  */
-static lpc_peripheral__isr_callback_f lpc_peripheral__isr_registrations[32 + 9] = {
+static function__void_f lpc_peripheral__isr_registrations[32 + 9] = {
     lpc_peripheral__halt_handler, // 16 WDT
     lpc_peripheral__halt_handler, // 17 Timer 0
     lpc_peripheral__halt_handler, // 18 Timer 1
@@ -83,7 +94,7 @@ void lpc_peripheral__interrupt_dispatcher(void) {
   const uint8_t isr_num = (*((uint8_t *)0xE000ED04)) - 16; // (SCB->ICSR & 0xFF) - 16;
 
   /* Lookup the function pointer we want to call and make the call */
-  lpc_peripheral__isr_callback_f isr_to_service = lpc_peripheral__isr_registrations[isr_num];
+  function__void_f isr_to_service = lpc_peripheral__isr_registrations[isr_num];
   isr_to_service();
 }
 
@@ -94,7 +105,7 @@ void lpc_peripheral__turn_on_power_to(lpc_peripheral_e peripheral) {
   }
 }
 
-void lpc_peripheral__enable_interrupt(lpc_peripheral_e peripheral, lpc_peripheral__isr_callback_f isr_callback) {
+void lpc_peripheral__enable_interrupt(lpc_peripheral_e peripheral, function__void_f isr_callback) {
   lpc_peripheral__isr_registrations[peripheral] = isr_callback;
   NVIC_EnableIRQ(peripheral); // Use CMS API
 }
