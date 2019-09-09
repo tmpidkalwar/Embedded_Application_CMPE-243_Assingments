@@ -1,14 +1,20 @@
 #include "lpc40xx.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 #include "delay.h"
 #include "gpio.h"
 #include "sys_time.h"
 
-#include "FreeRTOS.h"
-#include "task.h"
+#include "uart.h"
+#include "uart_printf.h"
 
 static void blink_task(void *params);
+static void uart_task(void *params);
+
 static void blink_on_startup(gpio_s gpio);
+static void uart0_init(void);
 
 static gpio_s led0, led1;
 
@@ -20,10 +26,12 @@ int main(void) {
   gpio__set_as_output(led0);
   gpio__set_as_output(led1);
 
+  uart0_init();
   blink_on_startup(led1);
 
-  xTaskCreate((TaskFunction_t)blink_task, "led0", 512U, (void *)&led0, PRIORITY_HIGH, NULL);
-  xTaskCreate((TaskFunction_t)blink_task, "led1", 512U, (void *)&led1, PRIORITY_HIGH, NULL);
+  xTaskCreate(blink_task, "led0", 512U, (void *)&led0, PRIORITY_LOW, NULL);
+  xTaskCreate(blink_task, "led1", 512U, (void *)&led1, PRIORITY_LOW, NULL);
+  xTaskCreate(uart_task, "uart", 512U, NULL, PRIORITY_LOW, NULL);
 
   vTaskStartScheduler();
 
@@ -44,7 +52,14 @@ static void blink_task(void *params) {
 
   while (1 == 1) {
     gpio__toggle(gpio);
-    vTaskDelay(250);
+    vTaskDelay(500);
+  }
+}
+
+static void uart_task(void *params) {
+  while (1 == 1) {
+    vTaskDelay(500);
+    uart_printf__polled(UART__0, "Hello world\n");
   }
 }
 
@@ -53,4 +68,18 @@ static void blink_on_startup(gpio_s gpio) {
     delay__ms(250);
     gpio__toggle(gpio);
   }
+}
+
+static void uart0_init(void) {
+  const gpio_s u0_txd = gpio__instantiate(gpio__port_0, 2); // P0.2
+  const gpio_s u0_rxd = gpio__instantiate(gpio__port_0, 3); // P0.3
+
+  gpio__set_function(u0_txd, gpio__function_1);
+  gpio__set_function(u0_rxd, gpio__function_1);
+
+  uart__init(UART__0, configCPU_CLOCK_HZ, 9600);
+
+  QueueHandle_t tx_queue = xQueueCreate(128, sizeof(char));
+  QueueHandle_t rx_queue = xQueueCreate(32, sizeof(char));
+  uart__enable_queues(UART__0, tx_queue, rx_queue);
 }
