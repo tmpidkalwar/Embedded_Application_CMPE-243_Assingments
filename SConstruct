@@ -23,7 +23,7 @@ TARGET_NAME = Dir(".").name
 Define file nodes and directory nodes
 """
 PROJECT_DIR = Dir(".")
-SOURCE_DIR = PROJECT_DIR.Dir("source")
+SOURCE_DIR = PROJECT_DIR.Dir("lpc40xx_freertos")
 
 """ Build artifact nodes """
 VARIANT_DIR = PROJECT_DIR.Dir("_build")

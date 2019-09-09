@@ -29,7 +29,7 @@ def append_env_var(env, dirnode, env_var="PATH"):
 
 
 def is_windows():
-    return "win" == sys.platform
+    return "win32" == sys.platform
 
 
 def is_linux():
