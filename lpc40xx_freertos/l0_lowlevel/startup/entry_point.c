@@ -12,5 +12,6 @@ void cpu_startup_entry_point(void) {
    * main() should never return.
    * CPU will now halt forever at this point.
    */
-  while (1) {}
+  while (1) {
+  }
 }
