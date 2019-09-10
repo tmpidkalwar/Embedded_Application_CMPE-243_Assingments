@@ -22,6 +22,12 @@ int main(void) {
 
   blink_on_startup(led1);
 
+  float x = 2.3F;
+  x *= 5.0F;
+
+  double y = 77.7F;
+  x = y / x;
+
   xTaskCreate((TaskFunction_t)blink_task, "led0", 512U, (void *)&led0, PRIORITY_HIGH, NULL);
   xTaskCreate((TaskFunction_t)blink_task, "led1", 512U, (void *)&led1, PRIORITY_HIGH, NULL);
 
