@@ -56,8 +56,6 @@ void gpio__set_function(gpio_s gpio, gpio__function_e function) {
   *pin_config |= ((uint32_t)function & config_mask);
 }
 
-void my_private_function(void) {}
-
 void gpio__set_as_input(gpio_s gpio) { gpio__get_struct(gpio)->DIR &= ~gpio__get_pin_mask(gpio); }
 
 void gpio__set_as_output(gpio_s gpio) { gpio__get_struct(gpio)->DIR |= gpio__get_pin_mask(gpio); }
