@@ -37,7 +37,7 @@ def get_args():
         default=None,
     )
     arg_parser.add_argument(
-        "-d", "--device",
+        "-p", "--port",
         metavar="<STRING or FILE>",
         type=str,
         help="USB to Serial device ID (i.e. COM6 or /dev/ttyUSB0)",
@@ -69,7 +69,7 @@ def get_args():
 def main():
     args = get_args()
     input_filepath = os.path.abspath(args.input)
-    device_id = args.device
+    device_id = args.port
     verbose = args.verbose
 
     print("Flashing file [{}] using device ID [{}]".format(input_filepath, device_id))
