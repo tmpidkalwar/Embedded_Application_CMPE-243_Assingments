@@ -17,15 +17,15 @@ References:
 ## Usage
 
 ```bash
-> python flash.py -d/--device <Device ID> -i/--input <Firmware file path (.bin)>
+> python flash.py -p/--port <Device Port> -i/--input <Firmware file path (.bin)>
 ```
 
 ### Example Usage
 
 ```powershell
-> python flash.py -d COM6 -i ..\_build\sjtwo-c.bin
+> python flash.py -p COM6 -i ..\_build\sjtwo-c.bin
 ```
 
 ```bash
-> python flash.py -d /dev/ttyUSB0 -i ../_build/sjtwo-c.bin
+> python flash.py -p /dev/ttyUSB0 -i ../_build/sjtwo-c.bin
 ```
