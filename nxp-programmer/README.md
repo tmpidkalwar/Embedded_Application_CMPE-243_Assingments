@@ -17,7 +17,7 @@ References:
 ## Usage
 
 ```bash
-> python flash.py -p/--port <Device Port> -i/--input <Firmware file path (.bin)>
+> python flash.py -p/-d/--port/--device <Device Port> -i/--input <Firmware file path (.bin)>
 ```
 
 ### Example Usage

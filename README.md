@@ -34,7 +34,7 @@ That is it, you should now be ready to build software for your board.
     * From the root directory of this `sjtwo-c` folder, type: `scons`
     * Once you get used to it, also try `scons -j4` to use more threads to build
 3. Invoke the python script to flash your new program
-    * `python nxp-programmer/flash.py -p/--port <Device Port> --input _build/sjtwo-c.bin`
+    * `python nxp-programmer/flash.py -p/-d/--port/--device <Device Port> --input _build/sjtwo-c.bin`
     * Note that input file defaults to `_build/sjtwo-c.bin`
     * For Mac, it might be: `python nxp-programmer/flash.py -d /dev/tty.SLAB_USBtoUART`
     * See [nxp-programmer README](nxp-programmer/README.md) for more information

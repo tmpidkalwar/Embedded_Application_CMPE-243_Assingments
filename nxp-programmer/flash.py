@@ -37,7 +37,7 @@ def get_args():
         default=None,
     )
     arg_parser.add_argument(
-        "-p", "--port",
+        "-p", "-d", "--port", "--device",
         metavar="<STRING or FILE>",
         type=str,
         help="USB to Serial device ID (i.e. COM6 or /dev/ttyUSB0)",
