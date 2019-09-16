@@ -39,6 +39,7 @@ That is it, you should now be ready to build software for your board.
 
 ### Advanced Tips
 
-* You can use `-i` (single slash) in place of `--input`
-* You can use `-d` (single slash) in place of `--device`
+* You can use `-i` (single dash) in place of `--input`
+* You can use `-d` (single dash) in place of `--device`
 * If `-i` is not provided, then the tool will default to `_build_lpc40xx_freertos/lpc40xx_freertos.bin`
+* So, you could use: `python nxp-programmer/flash.py --device /dev/ttyUSB`
