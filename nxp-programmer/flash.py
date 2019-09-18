@@ -36,6 +36,8 @@ def get_args():
         help="File path of firmware (.bin) to flash onto target",
         default=None,
     )
+
+    # --device left here for backward compatibility, use -p or --port
     arg_parser.add_argument(
         "-p", "-d", "--port", "--device",
         metavar="<STRING or FILE>",
