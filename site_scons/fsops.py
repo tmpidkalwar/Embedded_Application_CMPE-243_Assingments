@@ -8,79 +8,96 @@ import os
 
 from SCons.Script import *
 
+from sources import Sources
 
-DEFAULT_SRC_PATTERNS = ["*.c", "*.cpp", "*.s", "*.S"]
+DEFAULT_SOURCE_PATTERNS = ["*.c", "*.cpp"]
 DEFAULT_INCLUDE_PATTERNS = ["*.h", "*.hpp"]
+DEFAULT_ASSEMBLY_PATTERNS = ["*.s", "*.S"]
 
 
-def scan_tree(dirnode, src_patterns=DEFAULT_SRC_PATTERNS, header_patterns=DEFAULT_INCLUDE_PATTERNS, recursive=True):
+def scan_tree(
+    dirnode,
+    source_patterns=DEFAULT_SOURCE_PATTERNS,
+    include_patterns=DEFAULT_INCLUDE_PATTERNS,
+    assembly_patterns=DEFAULT_ASSEMBLY_PATTERNS,
+    recursive=True):
     """
-    Recursively search/glob source files, header files, etc.
+    Recursively search/glob source files, include files, etc.
     :param dirnode: A root directory node - root of search tree (Dir)
-    :param scr_patterns: A list of source file name patterns to search (list of str)
-    :param header_patterns: A list of header file name patterns to search (list of str)
-    :return: Tuple(
-        A list of source file nodes (list of File),
-        A list of header file nodes (list of File),
-        A list of directory nodes that contain a source file (list of Dir),
-        A list of directory nodes that contain a header file (list of Dir),
-    )
+    :param source_patterns: A list of source file name patterns to search (list of str)
+    :param include_patterns: A list of include file name patterns to search (list of str)
+    :param assembly_patterns: A list of assembly file name patterns to search (list of str)
+    :param recursive: Flag to determine if file/directory search operation should be recursive (bool)
+    :return: A sources object (Sources)
 
     Example usage:
-        src_filenodes, header_filenodes, src_dirnodes, include_dirnodes = scan_tree(Dir("RTOS"))
+        sources = scan_tree(Dir("RTOS"))
+        sources.source_filenodes  # A list of all source file nodes
+        sources.include_dirnodes  # A list of all include directory nodes
     """
     dirnode = Dir(dirnode)
-
-    src_filenodes = []
-    header_filenodes = []
-    src_dirnodes = []
-    include_dirnodes = []
-
+    sources = Sources()
     for dirpath, dirnames, filenames in os.walk(os.path.relpath(dirnode.abspath)):
-        for src_pattern in src_patterns:
-            matching_src_filenodes = Glob(os.path.join(dirpath, src_pattern))
-            src_filenodes.extend(matching_src_filenodes)
-            if Dir(dirpath) not in src_dirnodes:
-                src_dirnodes.append(Dir(dirpath))
+        if "SConscript" in filenames:
+            subsidary_sources = SConscript(Dir(dirpath).File("SConscript"))
+            if isinstance(subsidary_sources, Sources):
+                sources += subsidary_sources
+                dirnames[:] = []  # End recursion for this directory tree
+                continue
 
-        for header_pattern in header_patterns:
-            matching_header_filenodes = Glob(os.path.join(dirpath, header_pattern))
-            header_filenodes.extend(matching_header_filenodes)
-            if (len(fnmatch.filter(filenames, header_pattern)) > 0) and (
-                Dir(dirpath) not in include_dirnodes
-            ):
-                include_dirnodes.append(Dir(dirpath))
+        for source_pattern in source_patterns:
+            matching_source_filenodes = Glob(os.path.join(dirpath, source_pattern))
+            sources.source_filenodes.extend(matching_source_filenodes)
+            if Dir(dirpath) not in sources.source_dirnodes:
+                sources.source_dirnodes.append(Dir(dirpath))
+
+        for assembly_pattern in assembly_patterns:
+            matching_assembly_filenodes = Glob(os.path.join(dirpath, assembly_pattern))
+            sources.assembly_filenodes.extend(matching_assembly_filenodes)
+
+        for include_pattern in include_patterns:
+            matching_include_filenodes = Glob(os.path.join(dirpath, include_pattern))
+            sources.include_filenodes.extend(matching_include_filenodes)
+            if (len(fnmatch.filter(filenames, include_pattern)) > 0) and (Dir(dirpath) not in sources.include_dirnodes):
+                sources.include_dirnodes.append(Dir(dirpath))
 
         if not recursive:
             break
 
-    return (src_filenodes, header_filenodes, src_dirnodes, include_dirnodes)
+    return sources
 
 
-def filter_files(filenodes, exclude_filenodes=None, exclude_filename_pattern=None):
+def filter_files(filenodes, exclude_filenodes=None, exclude_dirnodes=None, exclude_filename_pattern=None):
     """
     Filter file nodes
     :param filenodes: A list of file nodes (list of File)
     :param exclude_filenodes: A list of file nodes to filter out (list of File)
+    :param exclude_dirnodes: A list of directory nodes to filter out (list of Dir)
     :param exclude_filename_pattern: A file name pattern to filter out files with a matching file name pattern (str)
     :return: A list of filtered file nodes (list of File)
     """
-    if exclude_filenodes is None:
-        exclude_filenodes = []
+    exclude_filenodes = exclude_filenodes if (exclude_filenodes is not None) else []
+    exclude_dirnodes = exclude_dirnodes if (exclude_dirnodes is not None) else []
 
     filenodes = list(map(File, filenodes))
     exclude_filenodes = list(map(File, exclude_filenodes))
+    exclude_dirnodes = list(map(Dir, exclude_dirnodes))
 
     filtered_filenodes = []
-    filtered_filenodes.extend(filter(lambda filenode: filenode not in exclude_filenodes, filenodes))
+    filtered_filenodes.extend(list(filter(lambda filenode: filenode not in exclude_filenodes, filenodes)))
 
     if exclude_filename_pattern is not None:
-        filtered_filenodes.extend(
-            filter(
-                lambda filenode: not fnmatch(filenode.name, exclude_filename_pattern),
-                filtered_filenodes,
-            )
-        )
+        filtered_filenodes.extend(list(filter(lambda filenode: not fnmatch(filenode.name, exclude_filename_pattern), filtered_filenodes)))
+
+    new_filtered_filenodes = []
+    if exclude_dirnodes is not None:
+        for filenode in filtered_filenodes:
+            for dirnode in exclude_dirnodes:
+                if dirnode.abspath in filenode.abspath:
+                    break
+            else:
+                new_filtered_filenodes.append(filenode)
+        filtered_filenodes = new_filtered_filenodes
 
     return filtered_filenodes
 

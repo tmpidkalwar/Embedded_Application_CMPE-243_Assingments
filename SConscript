@@ -2,6 +2,14 @@ import sys
 
 import fsops
 import osops
+from sources import Sources
+
+"""
+CLI
+"""
+verbose = GetOption("verbose")
+no_format = GetOption("no_format")
+
 
 """
 Imports
@@ -45,6 +53,11 @@ Import build environment
 SConscript(REPO_ROOT_DIR.File("env_arm"))
 Import("env_arm")
 
+""" Add/modify additional parameters """
+env_arm = env_arm.Clone(
+    tools=["clangformat"]
+)
+
 if osops.is_windows():
   print("-- Using ARM compiler on WINDOWS")
   osops.prepend_env_var(env_arm, REPO_ROOT_DIR.Dir("compiler/windows/gcc-arm-none-eabi-8-2019-q3-update/bin"))
@@ -70,28 +83,27 @@ env_arm["LINKFLAGS"] += [
 """
 Search and group files to build
 """
+all_sources = Sources()
 
 """ Search and group source files and source directories """
-target_src_filenodes = []
-target_src_dirnodes = []
 for dir in SRC_DIRS_ROOT:
-    src_filenodes, src_dirnodes, _, _ = fsops.scan_tree(dir)
-    target_src_filenodes.extend(src_filenodes)
-    target_src_dirnodes.extend(src_dirnodes)
+    sources = fsops.scan_tree(dir)
+    all_sources += sources
 
 """ Group linker scripts """
 for linker_file in LINKER_FILES:
     env_arm["LINKFLAGS"].append("-T{}".format(File(linker_file).abspath))
 
 """ Search and group include paths """
-env_arm["CPPPATH"].extend(INCLUDE_DIRS)
 for dir in INCLUDE_DIRS_ROOT:
-    _, _, _, include_dirnodes = fsops.scan_tree(dir)
-    env_arm["CPPPATH"].extend(include_dirnodes)
+    sources = fsops.scan_tree(dir)
+    all_sources += sources
+env_arm["CPPPATH"].extend(INCLUDE_DIRS)
+env_arm["CPPPATH"].extend(all_sources.include_dirnodes)
 
 """ Filter build files """
-target_src_filenodes = fsops.filter_files(target_src_filenodes, EXCLUDED_SRC_FILES)
-target_src_filenodes = fsops.remove_duplicate_filenodes(target_src_filenodes)
+all_sources.source_filenodes = fsops.filter_files(all_sources.source_filenodes, EXCLUDED_SRC_FILES)
+all_sources.source_filenodes = fsops.remove_duplicate_filenodes(all_sources.source_filenodes)
 
 
 """
@@ -100,9 +112,9 @@ Perform builds
 
 """ Compile all sources -> objects """
 obj_filenodes = []
-for src_filenode in target_src_filenodes:
-    dest_filepath = fsops.ch_target_filenode(src_filenode, OBJ_DIR, "o")
-    new_obj_filenodes = env_arm.Object(target=dest_filepath, source=src_filenode)
+for source_filenode in all_sources.source_filenodes:
+    dest_filepath = fsops.ch_target_filenode(source_filenode, OBJ_DIR, "o")
+    new_obj_filenodes = env_arm.Object(target=dest_filepath, source=source_filenode)
     obj_filenodes.extend(new_obj_filenodes)
 
 elf_filenodes = env_arm.Program(target=VARIANT_DIR.File("{}.elf".format(PROJECT_DIR.name)), source=obj_filenodes)
@@ -112,3 +124,28 @@ lst_filenodes = env_arm.Objdump(target=VARIANT_DIR.File("{}.lst".format(PROJECT_
 size_filenodes = env_arm.Size(target=VARIANT_DIR.File("{}.size".format(PROJECT_DIR.name)), source=elf_filenodes)
 
 Depends(elf_filenodes, LINKER_FILES)
+
+
+"""
+Automatically format all files
+"""
+FORMAT_EXCLUDED_FILES = [
+    PROJECT_DIR.File("lpc40xx.h"),
+]
+
+FORMAT_EXCLUDED_DIRS = [
+    PROJECT_DIR.Dir("l0_lowlevel/arm-software"),
+    PROJECT_DIR.Dir("l1_freertos"),
+    PROJECT_DIR.Dir("l4_io/fatfs"),
+]
+
+format_filenodes = fsops.filter_files(
+    filenodes=(all_sources.source_filenodes + all_sources.include_filenodes),
+    exclude_filenodes=FORMAT_EXCLUDED_FILES,
+    exclude_dirnodes=FORMAT_EXCLUDED_DIRS,
+)
+
+# If "--no-format" provided as command line argument, then do not run Clang Format builders
+if not no_format:
+    for filenode in format_filenodes:
+        env_arm.ClangFormat(filenode=filenode, verbose=verbose)
