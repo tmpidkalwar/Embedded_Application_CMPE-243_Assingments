@@ -62,6 +62,7 @@ INVALID_CODE = 16
 INVALID_BAUD_RATE = 17
 INVALID_STOP_BIT = 18
 CODE_READ_PROTECTION_ENABLED = 19
+COM_PORT_DELAY = 0.1/2
 
 parser = argparse.ArgumentParser()
 
@@ -599,7 +600,7 @@ class AutoLPCPortFinder:
         bytes_sent = port.write(bytearray(payload))
         if bytes_sent != len(payload):
             log(error_message)
-        else:
+        elif debug_message:
             log(debug_message)
 
     def port_read(self, port, number_of_bytes):
@@ -618,7 +619,11 @@ class AutoLPCPortFinder:
 
         for port_info in serial_device_list:
             try:
-                logging.debug("Trying port %s", port_info.device)
+                if "Bluetooth" in port_info.device or "AirPods" in port_info.device:
+                    logging.info('Skipping port %s because it is probably not a serial port', port_info.device)
+                    continue
+                else:
+                    logging.info("Trying port %s", port_info.device)
 
                 port = serial.Serial(
                     port=port_info.device,
@@ -648,17 +653,21 @@ class AutoLPCPortFinder:
         port.reset_input_buffer()
         port.reset_output_buffer()
 
-        logging.debug('Attempting to sync with device at %s', port.port)
+        log('-'*80)
+        logging.info('Attempting to sync with device at %s', port.port)
         self.port_write_and_verify(port, LPC_CHAR['Question'])
-        time.sleep(.100)
+        time.sleep(COM_PORT_DELAY)
         response = self.port_read(port, 14)
-        logging.info('Response = {response}')
+        if len(response) > 0:
+            logging.info('Response: %s', response)
+        else:
+            logging.warning('No response from %s', port.port)
 
         if (response == LPC_CHAR['Synchronized'] or
             response == LPC_CHAR['SynchronizedLeadingZeros']):
-            time.sleep(.100)
+            time.sleep(COM_PORT_DELAY)
             self.port_write_and_verify(port, LPC_CHAR['Synchronized'])
-            time.sleep(.100)
+            time.sleep(COM_PORT_DELAY)
             response = self.port_read(port, 17)
             return len(response) >= 4 and response[-4:] == LPC_CHAR['OK']
         return False
@@ -759,11 +768,11 @@ class SerialDevice(object):
     def isp_mode(self):
         self._serial.dtr = 1
         self._serial.rts = 1
-        time.sleep(0.1)
+        time.sleep(COM_PORT_DELAY)
         self._serial.reset_input_buffer()
         self._serial.reset_output_buffer()
         self._serial.dtr = 0
-        time.sleep(0.1)
+        time.sleep(COM_PORT_DELAY)
         self._serial.rts = 0
 
     def reset(self, level):
