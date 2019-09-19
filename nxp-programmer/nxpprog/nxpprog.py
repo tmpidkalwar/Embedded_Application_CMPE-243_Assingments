@@ -621,6 +621,7 @@ class AutoLPCPortFinder:
 
         for port_info in serial_device_list:
             try:
+                # On Macs, we have extra ports that are likely not real serial ports
                 if "Bluetooth" in port_info.device or "AirPods" in port_info.device:
                     logging.info('Skipping port %s because it is probably not a serial port', port_info.device)
                     continue
@@ -646,15 +647,15 @@ class AutoLPCPortFinder:
 
         return None
 
-    def attempt_sync(self, port):
+    def attempt_sync(self, serial):
         log('-'*80)
-        logging.info('Attempting to sync with device at %s', port.port)
-        enter_isp(port)
-        self.port_write_and_verify(port, LPC_CHAR['Question'])
+        logging.info('Attempting to sync with device at %s', serial.port)
+        enter_isp(serial)
+        self.port_write_and_verify(serial, LPC_CHAR['Question'])
 
         # We should not need the sleep while reading
         # time.sleep(COM_PORT_DELAY)
-        response = self.port_read(port, 14)
+        response = self.port_read(serial, 14)
         if len(response) > 0:
             logging.info('Response: %s', response)
         else:
@@ -663,10 +664,10 @@ class AutoLPCPortFinder:
         if (response == LPC_CHAR['Synchronized'] or
             response == LPC_CHAR['SynchronizedLeadingZeros']):
             #time.sleep(COM_PORT_DELAY)
-            self.port_write_and_verify(port, LPC_CHAR['Synchronized'])
+            self.port_write_and_verify(serial, LPC_CHAR['Synchronized'])
 
             #time.sleep(COM_PORT_DELAY)
-            response = self.port_read(port, 17)
+            response = self.port_read(serial, 17)
             return len(response) >= 4 and response[-4:] == LPC_CHAR['OK']
         return False
 

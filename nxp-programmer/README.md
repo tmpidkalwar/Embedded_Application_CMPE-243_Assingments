@@ -30,12 +30,12 @@ Windows:
 > python flash.py -p COM6 -i ..\_build_lpc40xx_freertos\lpc40xx_freertos.bin
 ```
 
-Linux
+Linux:
 ```bash
 > python flash.py -p /dev/ttyUSB0 -i ../_build_lpc40xx_freertos/lpc40xx_freertos.bin
 ```
 
-Mac
+Mac:
 ```bash
 > python flash.py -p /dev/cu.SLAB_USBtoUART -i ../_build_lpc40xx_freertos/lpc40xx_freertos.bin
 ```
