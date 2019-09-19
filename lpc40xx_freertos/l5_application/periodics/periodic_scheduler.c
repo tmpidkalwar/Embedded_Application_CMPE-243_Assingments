@@ -7,18 +7,21 @@
 
 /// Task data structure of each periodic task
 typedef struct {
+  /// Task uses vTaskDelayUntil() to carry out its periodic callback
   const TickType_t task_delay_in_ticks;
-  periodic_callbacks_f callback; ///< This callback is invoked from the task
-
+  /// This callback is invoked from the task
+  periodic_callbacks_f callback; 
+  /// Incremented until task_delay_in_ticks and then task_finished_flag is checked for deadline
+  TickType_t ticks_elapsed;
   /// After the callback() is invoked, this flag is set which is later checked by periodic_scheduler__task_monitor()
   bool task_finished_flag;
 } periodic_scheduler_s;
 
 /// Instances of the 4 periodic tasks and their callback function pointer
-static periodic_scheduler_s periodic_scheduler__1Hz = {1, periodic_callbacks__1Hz};
-static periodic_scheduler_s periodic_scheduler__10Hz = {10, periodic_callbacks__10Hz};
-static periodic_scheduler_s periodic_scheduler__100Hz = {100, periodic_callbacks__100Hz};
-static periodic_scheduler_s periodic_scheduler__1000Hz = {1000, periodic_callbacks__1000Hz};
+static periodic_scheduler_s periodic_scheduler__1Hz = {1000, periodic_callbacks__1Hz};
+static periodic_scheduler_s periodic_scheduler__10Hz = {100, periodic_callbacks__10Hz};
+static periodic_scheduler_s periodic_scheduler__100Hz = {10, periodic_callbacks__100Hz};
+static periodic_scheduler_s periodic_scheduler__1000Hz = {1, periodic_callbacks__1000Hz};
 
 /// Common task runner for each periodic task
 static void periodic_scheduler__run(periodic_scheduler_s *periodic) {
@@ -41,10 +44,16 @@ static void periodic_scheduler__100Hz_task(void *param) { periodic_scheduler__ru
 static void periodic_scheduler__1000Hz_task(void *param) { periodic_scheduler__run(&periodic_scheduler__1000Hz); }
 
 static void periodic_scheduler__check_flag(periodic_scheduler_s *periodic_task) {
-  if (periodic_task->task_finished_flag) {
-    periodic_task->task_finished_flag = false;
-  } else {
-    // Reboot
+  ++(periodic_task->ticks_elapsed);
+
+  if (periodic_task->ticks_elapsed >= periodic_task->task_delay_in_ticks) {
+    periodic_task->ticks_elapsed = 0;
+
+    if (periodic_task->task_finished_flag) {
+      periodic_task->task_finished_flag = false;
+    } else {
+      NVIC_SystemReset();
+    }
   }
 }
 static void periodic_scheduler__task_monitor(void *param) {
@@ -52,17 +61,9 @@ static void periodic_scheduler__task_monitor(void *param) {
   while (1) {
     vTaskDelay(1);
     periodic_scheduler__check_flag(&periodic_scheduler__1000Hz);
-
-    const unsigned milliseconds = xTaskGetTickCount();
-    if (0 == (milliseconds % 10)) {
-      periodic_scheduler__check_flag(&periodic_scheduler__100Hz);
-      if (0 == (milliseconds % 100)) {
-        periodic_scheduler__check_flag(&periodic_scheduler__10Hz);
-        if (0 == (milliseconds % 1000)) {
-          periodic_scheduler__check_flag(&periodic_scheduler__1Hz);
-        }
-      }
-    }
+    periodic_scheduler__check_flag(&periodic_scheduler__100Hz);
+    periodic_scheduler__check_flag(&periodic_scheduler__10Hz);
+    periodic_scheduler__check_flag(&periodic_scheduler__1Hz);
   }
 }
 
