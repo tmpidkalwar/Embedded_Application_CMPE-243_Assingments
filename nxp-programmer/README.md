@@ -22,6 +22,8 @@ References:
 
 ### Examples
 
+You would have to know the `COM` port, which is named differently for each OS.
+
 Windows:
 
 ```bash

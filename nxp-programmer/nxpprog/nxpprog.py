@@ -62,7 +62,9 @@ INVALID_CODE = 16
 INVALID_BAUD_RATE = 17
 INVALID_STOP_BIT = 18
 CODE_READ_PROTECTION_ENABLED = 19
+
 COM_PORT_DELAY = 0.1/2
+COM_PORT_TIMEOUT = 0.250
 
 parser = argparse.ArgumentParser()
 
@@ -635,7 +637,7 @@ class AutoLPCPortFinder:
 
                 sync_successful = self.attempt_sync(port)
                 if sync_successful:
-                    logging.info("LPC device found on this port!")
+                    logging.info("LPC device found on %s", port_info.device)
                     port.close()
                     return port_info.device
             except (OSError, serial.SerialException) as e:
@@ -645,18 +647,13 @@ class AutoLPCPortFinder:
         return None
 
     def attempt_sync(self, port):
-        enter_isp(port)
-        #serial_device = SerialDevice(port.port, port.baudrate)
-        #serial_device.isp_mode()
-
-        port.flush()
-        port.reset_input_buffer()
-        port.reset_output_buffer()
-
         log('-'*80)
         logging.info('Attempting to sync with device at %s', port.port)
+        enter_isp(port)
         self.port_write_and_verify(port, LPC_CHAR['Question'])
-        time.sleep(COM_PORT_DELAY)
+
+        # We should not need the sleep while reading
+        # time.sleep(COM_PORT_DELAY)
         response = self.port_read(port, 14)
         if len(response) > 0:
             logging.info('Response: %s', response)
@@ -665,9 +662,10 @@ class AutoLPCPortFinder:
 
         if (response == LPC_CHAR['Synchronized'] or
             response == LPC_CHAR['SynchronizedLeadingZeros']):
-            time.sleep(COM_PORT_DELAY)
+            #time.sleep(COM_PORT_DELAY)
             self.port_write_and_verify(port, LPC_CHAR['Synchronized'])
-            time.sleep(COM_PORT_DELAY)
+
+            #time.sleep(COM_PORT_DELAY)
             response = self.port_read(port, 17)
             return len(response) >= 4 and response[-4:] == LPC_CHAR['OK']
         return False
@@ -735,6 +733,7 @@ def enter_isp(serial):
     serial.reset_output_buffer()
     serial.dtr = 0
     time.sleep(COM_PORT_DELAY)
+    serial.rts = 0
 
 class SerialDevice(object):
     def __init__(self, device, baud, xonxoff=False, control=False):
@@ -758,7 +757,7 @@ class SerialDevice(object):
         # or the device is in the wrong mode.
         # This timeout is too short for slow baud rates but who wants to
         # use them?
-        self._serial.timeout = .5
+        self._serial.timeout = COM_PORT_TIMEOUT
         # device wants Xon Xoff flow control
         if xonxoff:
             self._serial.xonxoff = 1
@@ -1629,7 +1628,6 @@ def main(argv=None):
         prog.read_block(flash_addr_base, readlen, fd)
         fd.close()
     else:
-
         if filetype == "autodetect":
             filetype = "ihex" if filename.endswith('hex') else "bin"
 

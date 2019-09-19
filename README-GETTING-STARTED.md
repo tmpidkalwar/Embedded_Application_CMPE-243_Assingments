@@ -25,16 +25,26 @@ That is it, you should now be ready to build software for your board.
     * Once you get used to it, also try `scons -j4` to use more threads to build.
     * You can type `scons -clean` to clean the project
 3. Invoke the python script to flash your new program
-    * `python nxp-programmer/flash.py --port <Device Port> --input <.bin file path>`
-        * The `<Device Port>` is your serial port, and `<.bin file path>` is the path to your firmware you want to load to the board
-    * The script can auto-detect your `--port`, so you should be able to flash using:
-        * `python nxp-programmer/flash.py --input _build_lpc40xx_freertos/lpc40xx_freertos.bin`
+    * From the root of `sjtwo-c` folder, type: `python nxp-programmer/flash.py` and it might just work :)
     * See [nxp-programmer README](nxp-programmer/README.md) and more examples in the following `Examples` section
 4. After flashing your new program, use your favorite serial terminal to watch the output from your board.
 
-### `flash.py` Examples
+### How `flash.py` works
 
-Providing an explicit `--port` may be faster to program, but initially you would need to know what `--port` your SJ board is at. Try simply typing `python nxp-programmer/flash.py` which will use the default binary file, and automatically find the port for you, otherwise follow the examples below:
+This script takes a COM port and your firmware file to program, however:
+*  COM port can be automatically detected if `--port` argument is not provided
+*  Firmware file is defaulted to `_build_lpc40xx_freertos/lpc40xx_freertos.bin` if `--input` argument is not provided
+
+Example:
+
+* `python nxp-programmer/flash.py --port <Device Port> --input <.bin file path>`
+    * The `<Device Port>` is your serial port, and `<.bin file path>` is the path to your firmware you want to load to the board
+* The script can auto-detect your `--port`, so you should be able to flash using:
+    * `python nxp-programmer/flash.py --input _build_lpc40xx_freertos/lpc40xx_freertos.bin`
+
+### More `flash.py` Examples
+
+Providing an explicit `--port` may be faster to program, but initially you would need to know what `--port` your SJ board is at. Try using `python nxp-programmer/flash.py` which will use the default binary file, and automatically find the port for you, otherwise follow the examples below:
 
 * Example on Windows:
     * `python nxp-programmer/flash.py --port COM6 --input _build_lpc40xx_freertos/lpc40xx_freertos.bin`
