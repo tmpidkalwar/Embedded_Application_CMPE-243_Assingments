@@ -79,12 +79,12 @@ static void entry_point__uart0_init(void) {
 }
 
 static void entry_point__i2c_init(void) {
-  const uint32_t i2c_speed_khz = 100;
-  i2c__initialize(I2C__2, i2c_speed_khz);
+  const uint32_t i2c_speed_hz = UINT32_C(400) * 1000;
+  i2c__initialize(I2C__2, i2c_speed_hz, clock__get_peripheral_clock_hz());
 
   for (unsigned device = 2; device <= 254; device += 2) {
     if (i2c__check_response(I2C__2, device)) {
-      printf("Discovered an I2C device at address: 0x%02X\n", device);
+      printf("I2C device detected at address: 0x%02X\n", device);
     }
   }
 }
