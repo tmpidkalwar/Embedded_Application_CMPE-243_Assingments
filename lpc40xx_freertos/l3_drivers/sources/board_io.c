@@ -48,6 +48,14 @@ void board_io__initialize(void) {
   board_io__sd_card_ds();
   gpio__construct_as_input(GPIO__PORT_1, 9); // SD card detect
 
+  // I2C pins
+  gpio__construct_with_function(GPIO__PORT_0, 10, GPIO__FUNCTION_2); // P0.10 - SDA
+  gpio__construct_with_function(GPIO__PORT_0, 11, GPIO__FUNCTION_2); // P0.11 - SCL
+  LPC_IOCON->P0_10 |= (1 << 10);                                     // Open drain
+  LPC_IOCON->P0_11 |= (1 << 10);                                     // Open drain
+  LPC_IOCON->P0_10 &= ~(3 << 3);                                     // Disable pull-up and pull-down
+  LPC_IOCON->P0_11 &= ~(3 << 3);                                     // Disable pull-up and pull-down
+
   // Output pins
   board_io__led3 = gpio__construct_as_output(GPIO__PORT_2, 3);
   board_io__led2 = gpio__construct_as_output(GPIO__PORT_1, 26);
