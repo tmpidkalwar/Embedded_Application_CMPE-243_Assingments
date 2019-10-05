@@ -94,7 +94,7 @@ static void i2c2_isr(void) { i2c__handle_interrupt(&i2c_structs[I2C__2]); }
  *
  ******************************************************************************/
 
-void i2c__initialize(i2c_e i2c_number, uint32_t bus_speed_in_hz, uint32_t peripheral_clock_hz) {
+void i2c__initialize(i2c_e i2c_number, uint32_t desired_i2c_bus_speed_in_hz, uint32_t peripheral_clock_hz) {
   i2c_s *i2c = &i2c_structs[i2c_number];
   LPC_I2C_TypeDef *i2c_reg = i2c->registers;
   const function__void_f isrs[] = {i2c0_isr, i2c1_isr, i2c2_isr};
@@ -124,7 +124,7 @@ void i2c__initialize(i2c_e i2c_number, uint32_t bus_speed_in_hz, uint32_t periph
   const uint32_t percent_low = (100 - percent_high);
   const uint32_t max_speed_hz = UINT32_C(1) * 1000 * 1000;
   const uint32_t ideal_speed_hz = UINT32_C(100) * 1000;
-  const uint32_t freq_hz = (bus_speed_in_hz > max_speed_hz) ? ideal_speed_hz : bus_speed_in_hz;
+  const uint32_t freq_hz = (desired_i2c_bus_speed_in_hz > max_speed_hz) ? ideal_speed_hz : desired_i2c_bus_speed_in_hz;
   const uint32_t half_clock_divider = (peripheral_clock_hz / freq_hz) / 2;
   i2c_reg->SCLH = (half_clock_divider * percent_high) / 100;
   i2c_reg->SCLL = (half_clock_divider * percent_low) / 100;
@@ -140,7 +140,7 @@ void i2c__initialize(i2c_e i2c_number, uint32_t bus_speed_in_hz, uint32_t periph
   lpc_peripheral__enable_interrupt(i2c->peripheral_id, isrs[i2c_number]);
 }
 
-bool i2c__check_response(i2c_e i2c_number, uint8_t device_address) {
+bool i2c__detect(i2c_e i2c_number, uint8_t device_address) {
   // The I2C State machine will not continue after 1st state when length is set to 0
   const size_t zero_bytes = 0;
   const uint8_t dummy_register = 0;
@@ -149,7 +149,7 @@ bool i2c__check_response(i2c_e i2c_number, uint8_t device_address) {
   return i2c__write_slave_device_data(i2c_number, device_address, dummy_register, &unused, zero_bytes);
 }
 
-uint8_t i2c__read_register(i2c_e i2c_number, uint8_t device_address, uint8_t register_address) {
+uint8_t i2c__read_single(i2c_e i2c_number, uint8_t device_address, uint8_t register_address) {
   uint8_t byte = 0;
   i2c__read_slave_device_data(i2c_number, device_address, register_address, &byte, 1);
   return byte;
@@ -161,7 +161,7 @@ bool i2c__read_slave_device_data(i2c_e i2c_number, uint8_t device_address, uint8
   return i2c__transfer(&i2c_structs[i2c_number], device_address, first_register, bytes_to_read, number_of_bytes);
 }
 
-bool i2c__write_register(i2c_e i2c_number, uint8_t device_address, uint8_t register_address, uint8_t value) {
+bool i2c__write_single(i2c_e i2c_number, uint8_t device_address, uint8_t register_address, uint8_t value) {
   return i2c__write_slave_device_data(i2c_number, device_address, register_address, &value, 1);
 }
 

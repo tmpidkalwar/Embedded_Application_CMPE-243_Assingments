@@ -83,7 +83,7 @@ static void entry_point__i2c_init(void) {
   i2c__initialize(I2C__2, i2c_speed_hz, clock__get_peripheral_clock_hz());
 
   for (unsigned device = 2; device <= 254; device += 2) {
-    if (i2c__check_response(I2C__2, device)) {
+    if (i2c__detect(I2C__2, device)) {
       printf("I2C device detected at address: 0x%02X\n", device);
     }
   }
