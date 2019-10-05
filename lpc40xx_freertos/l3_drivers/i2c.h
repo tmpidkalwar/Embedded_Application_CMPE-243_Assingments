@@ -27,32 +27,36 @@ void i2c__initialize(i2c_e i2c_number, uint32_t desired_i2c_bus_speed_in_hz, uin
  * @returns true if the I2C device at the given address responds back with an ACK
  * @note this does not transfer any data
  */
-bool i2c__detect(i2c_e i2c_number, uint8_t device_address);
+bool i2c__detect(i2c_e i2c_number, uint8_t slave_address);
 
 /**
- * Reads one register of a device_address
- * @param register_address This is the first byte sent on I2C after the device_address
- * @note This is the same as calling i2c__read_slave_device_data() with 1 register to read
+ * Reads one memory location of a slave_address
+ * @param slave_memory_address
+ * This is the first byte sent on I2C after the slave_address which typically acts like a slave memory address
+ *
+ * @note This is the same as i2c__read_slave_data() with number_of_bytes set to 1
  */
-uint8_t i2c__read_single(i2c_e i2c_number, uint8_t device_address, uint8_t register_address);
+uint8_t i2c__read_single(i2c_e i2c_number, uint8_t slave_address, uint8_t slave_memory_address);
 
 /**
- * Reads multiple registers of the device_address, starting with the first_register
- * Typical devices implement 'auto increment' of the first_register which this function relies upon
+ * Reads multiple registers of the slave_address, starting with the starting_slave_memory_address
+ * Typical devices implement 'auto increment' of the starting_slave_memory_address which this function relies upon
  */
-bool i2c__read_slave_device_data(i2c_e i2c_number, uint8_t device_address, uint8_t first_register,
-                                 uint8_t *bytes_to_read, uint32_t number_of_bytes);
+bool i2c__read_slave_data(i2c_e i2c_number, uint8_t slave_address, uint8_t starting_slave_memory_address,
+                          uint8_t *bytes_to_read, uint32_t number_of_bytes);
 
 /**
- * Writes one register of a device_address
- * @param register_address This is the first byte sent on I2C after the device_address
- * @note This is the same as calling i2c__write_slave_device_data() with 1 register to write
+ * Writes one memory location of a slave_address
+ * @param slave_memory_address
+ * This is the first byte sent on I2C after the slave_address which typically acts like a slave memory address
+ *
+ * @note This is the same as i2c__write_slave_data() with number_of_bytes set to 1
  */
-bool i2c__write_single(i2c_e i2c_number, uint8_t device_address, uint8_t register_address, uint8_t value);
+bool i2c__write_single(i2c_e i2c_number, uint8_t slave_address, uint8_t slave_memory_address, uint8_t value);
 
 /**
- * Writes multiple registers of the device_address, starting with the first_register
- * Typical devices implement 'auto increment' of the first_register which this function relies upon
+ * Writes multiple registers of the slave_address, starting with the starting_slave_memory_address
+ * Typical devices implement 'auto increment' of the starting_slave_memory_address which this function relies upon
  */
-bool i2c__write_slave_device_data(i2c_e i2c_number, uint8_t device_address, uint8_t first_register,
-                                  uint8_t *bytes_to_write, uint32_t number_of_bytes);
+bool i2c__write_slave_data(i2c_e i2c_number, uint8_t slave_address, uint8_t starting_slave_memory_address,
+                           const uint8_t *bytes_to_write, uint32_t number_of_bytes);
