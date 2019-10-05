@@ -28,7 +28,7 @@ bool i2c__check_response(i2c_e i2c_number, uint8_t device_address);
 
 /**
  * Reads one register of a device_address
- * @param first_register This is the first byte sent on I2C after the device_address
+ * @param register_address This is the first byte sent on I2C after the device_address
  */
 uint8_t i2c__read_register(i2c_e i2c_number, uint8_t device_address, uint8_t register_address);
 
@@ -36,12 +36,12 @@ uint8_t i2c__read_register(i2c_e i2c_number, uint8_t device_address, uint8_t reg
  * Reads multiple registers of the device_address, starting with the first_register
  * Typical devices implement 'auto increment' of the first_register which this function relies upon
  */
-bool i2c__read(i2c_e i2c_number, uint8_t device_address, uint8_t first_register, uint8_t *bytes_to_read,
-               uint32_t number_of_bytes);
+bool i2c__read_slave_device_data(i2c_e i2c_number, uint8_t device_address, uint8_t first_register,
+                                 uint8_t *bytes_to_read, uint32_t number_of_bytes);
 
 /**
  * Writes one register of a device_address
- * @param first_register This is the first byte sent on I2C after the device_address
+ * @param register_address This is the first byte sent on I2C after the device_address
  */
 bool i2c__write_register(i2c_e i2c_number, uint8_t device_address, uint8_t register_address, uint8_t value);
 
@@ -49,5 +49,5 @@ bool i2c__write_register(i2c_e i2c_number, uint8_t device_address, uint8_t regis
  * Writes multiple registers of the device_address, starting with the first_register
  * Typical devices implement 'auto increment' of the first_register which this function relies upon
  */
-bool i2c__write(i2c_e i2c_number, uint8_t device_address, uint8_t first_register, uint8_t *bytes_to_write,
-                uint32_t number_of_bytes);
+bool i2c__write_slave_device_data(i2c_e i2c_number, uint8_t device_address, uint8_t first_register,
+                                  uint8_t *bytes_to_write, uint32_t number_of_bytes);

@@ -146,27 +146,27 @@ bool i2c__check_response(i2c_e i2c_number, uint8_t device_address) {
   const uint8_t dummy_register = 0;
   uint8_t unused = 0;
 
-  return i2c__write(i2c_number, device_address, dummy_register, &unused, zero_bytes);
+  return i2c__write_slave_device_data(i2c_number, device_address, dummy_register, &unused, zero_bytes);
 }
 
 uint8_t i2c__read_register(i2c_e i2c_number, uint8_t device_address, uint8_t register_address) {
   uint8_t byte = 0;
-  i2c__read(i2c_number, device_address, register_address, &byte, 1);
+  i2c__read_slave_device_data(i2c_number, device_address, register_address, &byte, 1);
   return byte;
 }
 
-bool i2c__read(i2c_e i2c_number, uint8_t device_address, uint8_t first_register, uint8_t *bytes_to_read,
-               uint32_t number_of_bytes) {
+bool i2c__read_slave_device_data(i2c_e i2c_number, uint8_t device_address, uint8_t first_register,
+                                 uint8_t *bytes_to_read, uint32_t number_of_bytes) {
   i2c__flag_read_mode(&device_address);
   return i2c__transfer(&i2c_structs[i2c_number], device_address, first_register, bytes_to_read, number_of_bytes);
 }
 
 bool i2c__write_register(i2c_e i2c_number, uint8_t device_address, uint8_t register_address, uint8_t value) {
-  return i2c__write(i2c_number, device_address, register_address, &value, 1);
+  return i2c__write_slave_device_data(i2c_number, device_address, register_address, &value, 1);
 }
 
-bool i2c__write(i2c_e i2c_number, uint8_t device_address, uint8_t first_register, uint8_t *bytes_to_write,
-                uint32_t number_of_bytes) {
+bool i2c__write_slave_device_data(i2c_e i2c_number, uint8_t device_address, uint8_t first_register,
+                                  uint8_t *bytes_to_write, uint32_t number_of_bytes) {
   i2c__flag_write_mode(&device_address);
   return i2c__transfer(&i2c_structs[i2c_number], device_address, first_register, bytes_to_write, number_of_bytes);
 }
