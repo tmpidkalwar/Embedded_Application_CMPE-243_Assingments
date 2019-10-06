@@ -4,6 +4,7 @@
 #include "semphr.h"
 #include "task.h"
 
+#include "common_macros.h"
 #include "lpc40xx.h"
 #include "lpc_peripherals.h"
 
@@ -26,7 +27,6 @@
  * Data structure for each I2C peripheral
  */
 typedef struct {
-  lpc_peripheral_e peripheral_id;   ///< Indicates which peripheral (I2C0, I2C1 etc.) this struct is for
   LPC_I2C_TypeDef *const registers; ///< LPC memory mapped registers for the I2C bus
 
   // Transfer complete signal informs us when I2C state machine driven by ISR has finished
@@ -39,26 +39,28 @@ typedef struct {
   uint8_t error_code;
   uint8_t slave_address;
   uint8_t starting_slave_memory_address;
-  size_t bytes_to_transfer;
 
-  uint8_t *bytes_to_input;        ///< Used for reading I2C slave device
-  const uint8_t *bytes_to_output; ///< Used for writing data to the I2C slave device
+  uint8_t *input_byte_pointer;        ///< Used for reading I2C slave device
+  const uint8_t *output_byte_pointer; ///< Used for writing data to the I2C slave device
+  size_t number_of_bytes_to_transfer;
 } i2c_s;
 
 /// Instances of structs for each I2C peripheral
 static i2c_s i2c_structs[] = {
-    {LPC_PERIPHERAL__I2C0, LPC_I2C0},
-    {LPC_PERIPHERAL__I2C1, LPC_I2C1},
-    {LPC_PERIPHERAL__I2C2, LPC_I2C2},
+    {LPC_I2C0},
+    {LPC_I2C1},
+    {LPC_I2C2},
 };
 
 static bool i2c__transfer(i2c_s *i2c, uint8_t slave_address, uint8_t starting_slave_memory_address,
-                          uint8_t *bytes_to_input, const uint8_t *bytes_to_output, uint32_t number_of_bytes);
+                          uint8_t *input_byte_pointer, const uint8_t *output_byte_pointer,
+                          uint32_t number_of_bytes_to_transfer);
 static bool i2c__transfer_unprotected(i2c_s *i2c, uint8_t slave_address, uint8_t starting_slave_memory_address,
-                                      uint8_t *bytes_to_input, const uint8_t *bytes_to_output,
-                                      uint32_t number_of_bytes);
+                                      uint8_t *input_byte_pointer, const uint8_t *output_byte_pointer,
+                                      uint32_t number_of_bytes_to_transfer);
 static void i2c__kick_off_transfer(i2c_s *i2c, uint8_t slave_address, uint8_t starting_slave_memory_address,
-                                   uint8_t *bytes_to_input, const uint8_t *bytes_to_output, uint32_t number_of_bytes);
+                                   uint8_t *input_byte_pointer, const uint8_t *output_byte_pointer,
+                                   uint32_t number_of_bytes_to_transfer);
 static bool i2c__handle_state_machine(i2c_s *i2c);
 static bool i2c__set_stop(LPC_I2C_TypeDef *i2c);
 static void i2c__handle_interrupt(i2c_s *i2c);
@@ -98,9 +100,16 @@ static void i2c2_isr(void) { i2c__handle_interrupt(&i2c_structs[I2C__2]); }
  ******************************************************************************/
 
 void i2c__initialize(i2c_e i2c_number, uint32_t desired_i2c_bus_speed_in_hz, uint32_t peripheral_clock_hz) {
+  const function__void_f isrs[] = {i2c0_isr, i2c1_isr, i2c2_isr};
+  const lpc_peripheral_e peripheral_ids[] = {LPC_PERIPHERAL__I2C0, LPC_PERIPHERAL__I2C1, LPC_PERIPHERAL__I2C2};
+
+  // Make sure our i2c structs size matches our map of ISRs and I2C peripheral IDs
+  COMPILE_TIME_ASSERT(ARRAY_SIZE(i2c_structs) == ARRAY_SIZE(isrs));
+  COMPILE_TIME_ASSERT(ARRAY_SIZE(i2c_structs) == ARRAY_SIZE(peripheral_ids));
+
   i2c_s *i2c = &i2c_structs[i2c_number];
   LPC_I2C_TypeDef *lpc_i2c = i2c->registers;
-  const function__void_f isrs[] = {i2c0_isr, i2c1_isr, i2c2_isr};
+  const lpc_peripheral_e peripheral_id = peripheral_ids[i2c_number];
 
   // Create binary semaphore and mutex. We deliberately use non static memory
   // allocation because we do not want to statically define memory for all I2C buses
@@ -111,7 +120,7 @@ void i2c__initialize(i2c_e i2c_number, uint32_t desired_i2c_bus_speed_in_hz, uin
   // vTraceSetMutexName(mI2CMutex, "I2C Mutex");
   // vTraceSetSemaphoreName(mTransferCompleteSignal, "I2C Finish Sem");
 
-  lpc_peripheral__turn_on_power_to(i2c->peripheral_id);
+  lpc_peripheral__turn_on_power_to(peripheral_id);
   lpc_i2c->CONCLR = 0x6C; // Clear ALL I2C Flags
 
   /**
@@ -137,7 +146,7 @@ void i2c__initialize(i2c_e i2c_number, uint32_t desired_i2c_bus_speed_in_hz, uin
 
   // Enable I2C and the interrupt for it
   lpc_i2c->CONSET = 0x40;
-  lpc_peripheral__enable_interrupt(i2c->peripheral_id, isrs[i2c_number]);
+  lpc_peripheral__enable_interrupt(peripheral_id, isrs[i2c_number]);
 }
 
 bool i2c__detect(i2c_e i2c_number, uint8_t slave_address) {
@@ -156,11 +165,11 @@ uint8_t i2c__read_single(i2c_e i2c_number, uint8_t slave_address, uint8_t slave_
 }
 
 bool i2c__read_slave_data(i2c_e i2c_number, uint8_t slave_address, uint8_t starting_slave_memory_address,
-                          uint8_t *bytes_to_read, uint32_t number_of_bytes) {
-  const uint8_t *no_bytes_to_output = NULL;
+                          uint8_t *bytes_to_read, uint32_t number_of_bytes_to_transfer) {
+  const uint8_t *no_output_byte_pointer = NULL;
   i2c__flag_read_mode(&slave_address);
   return i2c__transfer(&i2c_structs[i2c_number], slave_address, starting_slave_memory_address, bytes_to_read,
-                       no_bytes_to_output, number_of_bytes);
+                       no_output_byte_pointer, number_of_bytes_to_transfer);
 }
 
 bool i2c__write_single(i2c_e i2c_number, uint8_t slave_address, uint8_t slave_memory_address, uint8_t value) {
@@ -168,11 +177,11 @@ bool i2c__write_single(i2c_e i2c_number, uint8_t slave_address, uint8_t slave_me
 }
 
 bool i2c__write_slave_data(i2c_e i2c_number, uint8_t slave_address, uint8_t starting_slave_memory_address,
-                           const uint8_t *bytes_to_write, uint32_t number_of_bytes) {
-  uint8_t *no_bytes_to_input = NULL;
+                           const uint8_t *bytes_to_write, uint32_t number_of_bytes_to_transfer) {
+  uint8_t *no_input_byte_pointer = NULL;
   i2c__flag_write_mode(&slave_address);
-  return i2c__transfer(&i2c_structs[i2c_number], slave_address, starting_slave_memory_address, no_bytes_to_input,
-                       bytes_to_write, number_of_bytes);
+  return i2c__transfer(&i2c_structs[i2c_number], slave_address, starting_slave_memory_address, no_input_byte_pointer,
+                       bytes_to_write, number_of_bytes_to_transfer);
 }
 
 /*******************************************************************************
@@ -182,14 +191,15 @@ bool i2c__write_slave_data(i2c_e i2c_number, uint8_t slave_address, uint8_t star
  ******************************************************************************/
 
 static bool i2c__transfer(i2c_s *i2c, uint8_t slave_address, uint8_t starting_slave_memory_address,
-                          uint8_t *bytes_to_input, const uint8_t *bytes_to_output, uint32_t number_of_bytes) {
+                          uint8_t *input_byte_pointer, const uint8_t *output_byte_pointer,
+                          uint32_t number_of_bytes_to_transfer) {
   bool status = false;
 
   // Either the input or the output data needs to be non NULL (XOR)
-  if ((NULL != bytes_to_input) ^ (NULL != bytes_to_output)) {
+  if ((NULL != input_byte_pointer) ^ (NULL != output_byte_pointer)) {
     if (xSemaphoreTake(i2c->mutex, portMAX_DELAY)) {
-      status = i2c__transfer_unprotected(i2c, slave_address, starting_slave_memory_address, bytes_to_input,
-                                         bytes_to_output, number_of_bytes);
+      status = i2c__transfer_unprotected(i2c, slave_address, starting_slave_memory_address, input_byte_pointer,
+                                         output_byte_pointer, number_of_bytes_to_transfer);
       xSemaphoreGive(i2c->mutex);
     }
   }
@@ -199,15 +209,15 @@ static bool i2c__transfer(i2c_s *i2c, uint8_t slave_address, uint8_t starting_sl
 }
 
 static bool i2c__transfer_unprotected(i2c_s *i2c, uint8_t slave_address, uint8_t starting_slave_memory_address,
-                                      uint8_t *bytes_to_input, const uint8_t *bytes_to_output,
-                                      uint32_t number_of_bytes) {
+                                      uint8_t *input_byte_pointer, const uint8_t *output_byte_pointer,
+                                      uint32_t number_of_bytes_to_transfer) {
   bool status = false;
   const uint32_t timeout_ms = 3000;
   const bool rtos_is_running = (taskSCHEDULER_RUNNING == xTaskGetSchedulerState());
 
   xSemaphoreTake(i2c->transfer_complete_signal, 0); // Clear potential stale transfer complete signal
-  i2c__kick_off_transfer(i2c, slave_address, starting_slave_memory_address, bytes_to_input, bytes_to_output,
-                         number_of_bytes);
+  i2c__kick_off_transfer(i2c, slave_address, starting_slave_memory_address, input_byte_pointer, output_byte_pointer,
+                         number_of_bytes_to_transfer);
 
   // Wait for transfer to finish; the signal will be sent by the ISR once the transaction finishes
   if (rtos_is_running) {
@@ -225,14 +235,15 @@ static bool i2c__transfer_unprotected(i2c_s *i2c, uint8_t slave_address, uint8_t
 }
 
 static void i2c__kick_off_transfer(i2c_s *i2c, uint8_t slave_address, uint8_t starting_slave_memory_address,
-                                   uint8_t *bytes_to_input, const uint8_t *bytes_to_output, uint32_t number_of_bytes) {
+                                   uint8_t *input_byte_pointer, const uint8_t *output_byte_pointer,
+                                   uint32_t number_of_bytes_to_transfer) {
   i2c->error_code = 0;
   i2c->slave_address = slave_address;
   i2c->starting_slave_memory_address = starting_slave_memory_address;
 
-  i2c->bytes_to_input = bytes_to_input;
-  i2c->bytes_to_output = bytes_to_output;
-  i2c->bytes_to_transfer = number_of_bytes;
+  i2c->input_byte_pointer = input_byte_pointer;
+  i2c->output_byte_pointer = output_byte_pointer;
+  i2c->number_of_bytes_to_transfer = number_of_bytes_to_transfer;
 
   // Send START, I2C State Machine will finish the rest through interrupts; @see i2c__handle_state_machine()
   I2C__DEBUG_PRINTF("Starting transfer with device address: 0x%02X", (unsigned)slave_address);
@@ -296,7 +307,7 @@ static bool i2c__handle_state_machine(i2c_s *i2c) {
     i2c__clear_start_flag(lpc_i2c);
 
     // No data to transfer, this is used just to test if the slave responds
-    if (0 == i2c->bytes_to_transfer) {
+    if (0 == i2c->number_of_bytes_to_transfer) {
       stop_sent = i2c__set_stop(lpc_i2c);
     } else {
       lpc_i2c->DAT = i2c->starting_slave_memory_address;
@@ -311,12 +322,12 @@ static bool i2c__handle_state_machine(i2c_s *i2c) {
       i2c__set_start_flag(lpc_i2c);
       i2c__clear_si_flag_for_hw_to_take_next_action(lpc_i2c);
     } else {
-      if (0 == i2c->bytes_to_transfer) {
+      if (0 == i2c->number_of_bytes_to_transfer) {
         stop_sent = i2c__set_stop(lpc_i2c);
       } else {
-        lpc_i2c->DAT = *(i2c->bytes_to_output);
-        ++(i2c->bytes_to_output);
-        --(i2c->bytes_to_transfer);
+        lpc_i2c->DAT = *(i2c->output_byte_pointer);
+        ++(i2c->output_byte_pointer);
+        --(i2c->number_of_bytes_to_transfer);
         i2c__clear_si_flag_for_hw_to_take_next_action(lpc_i2c);
       }
     }
@@ -329,7 +340,7 @@ static bool i2c__handle_state_machine(i2c_s *i2c) {
     i2c__clear_start_flag(lpc_i2c);
 
     // 1+ bytes: Send ACK to receive a byte and transition to I2C__STATE_MR_SLAVE_ACK_SENT
-    if (i2c->bytes_to_transfer > 1) {
+    if (i2c->number_of_bytes_to_transfer > 1) {
       i2c__set_ack_flag(lpc_i2c);
     }
     // 1 byte : NACK next byte to go to I2C__STATE_MR_SLAVE_NACK_SENT for 1-byte read
@@ -341,12 +352,12 @@ static bool i2c__handle_state_machine(i2c_s *i2c) {
     break;
 
   case I2C__STATE_MR_SLAVE_ACK_SENT:
-    *(i2c->bytes_to_input) = lpc_i2c->DAT;
-    ++(i2c->bytes_to_input);
-    --(i2c->bytes_to_transfer);
+    *(i2c->input_byte_pointer) = lpc_i2c->DAT;
+    ++(i2c->input_byte_pointer);
+    --(i2c->number_of_bytes_to_transfer);
 
-    if (1 == i2c->bytes_to_transfer) { // Only 1 more byte remaining
-      i2c__set_nack_flag(lpc_i2c);     // NACK next byte --> Next state: I2C__STATE_MR_SLAVE_NACK_SENT
+    if (1 == i2c->number_of_bytes_to_transfer) { // Only 1 more byte remaining
+      i2c__set_nack_flag(lpc_i2c);               // NACK next byte --> Next state: I2C__STATE_MR_SLAVE_NACK_SENT
     } else {
       i2c__set_ack_flag(lpc_i2c); // ACK next byte --> Next state: I2C__STATE_MR_SLAVE_ACK_SENT(back to this state)
     }
@@ -355,8 +366,8 @@ static bool i2c__handle_state_machine(i2c_s *i2c) {
     break;
 
   case I2C__STATE_MR_SLAVE_NACK_SENT: // Read last-byte from Slave
-    *(i2c->bytes_to_input) = lpc_i2c->DAT;
-    i2c->bytes_to_transfer = 0;
+    *(i2c->input_byte_pointer) = lpc_i2c->DAT;
+    i2c->number_of_bytes_to_transfer = 0;
     stop_sent = i2c__set_stop(lpc_i2c);
     break;
 

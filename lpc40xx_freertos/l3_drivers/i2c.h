@@ -9,6 +9,12 @@
  * Most typical implementation of an I2C device is that after the device address is sent, the first byte
  * is interpreted as a register number we wish to read or write. Devices that deviate from this
  * implementation may require enhancing this I2C driver.
+ *
+ * Some devices indicate an 8-bit address, so this an be directly passed to the API as 'slave_address'
+ * In this case, we include the read/write bit with the address.
+ *
+ * Others indicate 7-bit address, and so you should then pass 'addr_7_bit << 1' to 'slave_address' because
+ * the LSB bit is a read/write bit.
  */
 
 typedef enum {
@@ -19,7 +25,8 @@ typedef enum {
 
 /**
  * I2C peripheral must be initialized before it is used
- * @param peripheral_clock_hz This is speed of the peripheral clock feeding the I2C peripheral
+ * @param peripheral_clock_hz
+ * This is speed of the peripheral clock feeding the I2C peripheral; it is used to set the desired_i2c_bus_speed_in_hz
  */
 void i2c__initialize(i2c_e i2c_number, uint32_t desired_i2c_bus_speed_in_hz, uint32_t peripheral_clock_hz);
 
