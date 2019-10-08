@@ -95,6 +95,17 @@
 #define INCLUDE_uxTaskGetStackHighWaterMark     1
 #define INCLUDE_eTaskGetState                   1
 
+// Enable CPU utilization API
+#define configUSE_TRACE_FACILITY                1
+#define configGENERATE_RUN_TIME_STATS           1
+#define configUSE_STATS_FORMATTING_FUNCTIONS    1
+
+#if ( ( configUSE_TRACE_FACILITY == 1 ) && ( configUSE_STATS_FORMATTING_FUNCTIONS > 0 ) )
+  #include "sys_time.h"
+  #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()  /* sys_init() is initialized before FreeRTOS starts */
+  #define portGET_RUN_TIME_COUNTER_VALUE()          sys_time__get_uptime_us()
+#endif
+
 /**
  * When FreeRTOS runs into an assertion that should never occur
  * You can change #if 0 to #if 1 for production, but NEVER change it during development
