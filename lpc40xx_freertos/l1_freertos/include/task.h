@@ -2411,6 +2411,11 @@ TaskHandle_t pvTaskIncrementMutexHeldCount( void ) PRIVILEGED_FUNCTION;
  */
 void vTaskInternalSetTimeOutState( TimeOut_t * const pxTimeOut ) PRIVILEGED_FUNCTION;
 
+// FreeRTOS customization
+BaseType_t uxTaskGetCpuUsage(TaskHandle_t xTask);
+void vTaskResetRunTimeStats(void);
+void vRunTimeStatIsrEntry(void);
+void vRunTimeStatIsrExit(void);
 
 #ifdef __cplusplus
 }

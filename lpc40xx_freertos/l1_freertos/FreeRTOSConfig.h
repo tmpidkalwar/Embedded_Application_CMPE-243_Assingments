@@ -98,12 +98,15 @@
 // Enable CPU utilization API
 #define configUSE_TRACE_FACILITY                1
 #define configGENERATE_RUN_TIME_STATS           1
-#define configUSE_STATS_FORMATTING_FUNCTIONS    1
 
-#if ( ( configUSE_TRACE_FACILITY == 1 ) && ( configUSE_STATS_FORMATTING_FUNCTIONS > 0 ) )
-  #include "sys_time.h"
+// If RTOS trace facility is enabled, then provide the high resolution timer API
+#if (0 != configUSE_TRACE_FACILITY)
+  extern uint32_t freertos_get_run_time_counter_value(void);
+  extern void freertos_reset_run_time_stats(void);
+
   #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()  /* sys_init() is initialized before FreeRTOS starts */
-  #define portGET_RUN_TIME_COUNTER_VALUE()          sys_time__get_uptime_us()
+  #define portGET_RUN_TIME_COUNTER_VALUE()          freertos_get_run_time_counter_value()
+  #define portRESET_TIMER_FOR_RUN_TIME_STATS()      freertos_reset_run_time_stats()
 #endif
 
 /**

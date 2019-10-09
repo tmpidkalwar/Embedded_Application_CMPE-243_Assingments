@@ -4,21 +4,21 @@
 #include "task.h"
 
 app_cli_status_e cli__hello(app_cli__argument_t argument, sl_string_t user_input_minus_command_name,
-                            app_cli__print_string_function output_print_string) {
+                            app_cli__print_string_function cli_output) {
   sl_string_t output_string = user_input_minus_command_name; // re-use the string
 
   sl_string__printf(output_string, "hello world!\n");
-  output_print_string(argument, output_string);
+  cli_output(argument, output_string);
 
   return APP_CLI_STATUS__SUCCESS;
 }
 
 app_cli_status_e cli__task_list(app_cli__argument_t argument, sl_string_t user_input_minus_command_name,
-                                app_cli__print_string_function output_print_string) {
+                                app_cli__print_string_function cli_output) {
   sl_string_t output_string = user_input_minus_command_name; // re-use the string
 
   // Enum to char : eRunning, eReady, eBlocked, eSuspended, eDeleted
-  const char *const task_status_table[] = {"running", "-ready-", "blocked", "suspend", "deleted"};
+  const char *const task_status_table[] = {"running", " ready ", "blocked", "suspend", "deleted"};
 
   // Limit the tasks to avoid heap allocation.
   const unsigned portBASE_TYPE max_tasks = 10;
@@ -28,7 +28,7 @@ app_cli_status_e cli__task_list(app_cli__argument_t argument, sl_string_t user_i
   const unsigned portBASE_TYPE uxArraySize = uxTaskGetSystemState(&status[0], max_tasks, &total_cpu_runtime);
 
   sl_string__printf(output_string, "%10s  Status Pr Stack CPU%%          Time\n", "Name");
-  output_print_string(argument, output_string);
+  cli_output(argument, output_string);
 
   for (unsigned priority_number = 0; priority_number < configMAX_PRIORITIES; priority_number++) {
     /* Print in sorted priority order */
@@ -44,7 +44,7 @@ app_cli_status_e cli__task_list(app_cli__argument_t argument, sl_string_t user_i
         sl_string__printf(output_string, "%10s %s %2u %5u %4u %10u us\n", e->pcTaskName,
                           task_status_table[e->eCurrentState], (unsigned)e->uxBasePriority, stack_in_bytes, cpu_percent,
                           time_us);
-        output_print_string(argument, output_string);
+        cli_output(argument, output_string);
       }
     }
   }

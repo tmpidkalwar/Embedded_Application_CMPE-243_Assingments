@@ -59,7 +59,7 @@ static void sj2_cli__get_line(sl_string_t user_input) {
     const char byte = getchar();
     sl_string__append_char(user_input, byte);
 
-    if (sl_string__full(user_input)) {
+    if (sl_string__is_full(user_input)) {
       break;
     }
   }

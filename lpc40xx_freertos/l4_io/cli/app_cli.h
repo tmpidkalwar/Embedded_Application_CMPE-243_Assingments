@@ -31,18 +31,16 @@ static app_cli_status_e app_cli__hello_handler(app_cli__argument_t argument,
 }
 
 static void cli_example(void) {
-  app_cli_s cli = app_cli__initialize(4, app_cli_output_function);
+  const bool color_output = true;
+  const char *separator = "--------------------------------------------------------------------------------\r\n";
 
+  static app_cli_s sj2_cli_struct;
+  sj2_cli_struct = app_cli__initialize(4, sj2_cli__output_function, !color_output, separator);
+
+  // Need static struct that does not go out of scope
   static app_cli__command_s hello_command = {.command_name = "hello",
                                              .help_message_for_command = "responds back with 'hello world'",
                                              .app_cli_handler = app_cli__hello_handler};
-
-  app_cli__add_command_handler(&cli, &hello_command);
-
-  app_cli__process_input(&cli, NULL, "hello");
-
-  // Help command is built-in which will print the list of all commands
-  app_cli__process_input(&cli, NULL, "help");
 }
 
  @endcode

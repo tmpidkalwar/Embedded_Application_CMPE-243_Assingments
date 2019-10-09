@@ -11,8 +11,8 @@
  */
 
 /**
- * @file sl_string.h
- * @brief Library for generic string implementations
+ * @file
+ * Library for generic string implementations
  *
  * The library is based on static memory allocation and the string memory will not allocate more
  * memory or grow after initialization. Interesting feature is that the string still allows
@@ -98,7 +98,7 @@ sl_string_size_t sl_string__get_capacity_including_null_char(const sl_string_t s
  */
 sl_string_size_t sl_string__get_length(const sl_string_t string);
 
-bool sl_string__full(const sl_string_t string);
+bool sl_string__is_full(const sl_string_t string);
 
 /**
  * @returns the start of the string, similar to std::string.c_str()

@@ -133,7 +133,7 @@ sl_string_size_t sl_string__get_capacity_including_null_char(const sl_string_t s
 
 sl_string_size_t sl_string__get_length(const sl_string_t string) { return (sl_string_size_t)strlen(string); }
 
-bool sl_string__full(const sl_string_t string) {
+bool sl_string__is_full(const sl_string_t string) {
   return sl_string__get_length(string) == sl_string__get_capacity(string);
 }
 
