@@ -33,7 +33,7 @@
 #define configTICK_RATE_HZ                      ((TickType_t) 1000)
 #define configUSE_PREEMPTION                    1
 
-#define configMINIMAL_STACK_SIZE                ((unsigned short) 512 / sizeof(void*))
+#define configMINIMAL_STACK_SIZE                ((unsigned short) 400 / sizeof(void*))
 #define configCHECK_FOR_STACK_OVERFLOW          (2)
 
 #define configMAX_TASK_NAME_LEN                 (12)
@@ -73,7 +73,7 @@
 #define configUSE_MUTEXES                       1
 #define configUSE_COUNTING_SEMAPHORES           1
 #define configUSE_RECURSIVE_MUTEXES             0
-#define configUSE_QUEUE_SETS                    1
+#define configUSE_QUEUE_SETS                    0
 
 #define configUSE_TIMERS                        0
 #define configTIMER_TASK_PRIORITY               (PRIORITY_HIGH)

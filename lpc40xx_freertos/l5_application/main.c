@@ -4,8 +4,10 @@
 #include "task.h"
 
 #include "board_io.h"
+#include "common_macros.h"
 #include "delay.h"
 #include "gpio.h"
+#include "sj2_cli.h"
 
 static void blink_task(void *params);
 static void uart_task(void *params);
@@ -24,12 +26,12 @@ int main(void) {
 
   // It is advised to either run the uart_task, or the SJ2 command-line (CLI), but not both
   // Change '#if 0' to '#if 1' and vice versa to try it out
-#if 0
+#if 1
   // printf() takes more stack space, size this tasks' stack higher
   xTaskCreate(uart_task, "uart", (512U * 8) / sizeof(void *), NULL, PRIORITY_LOW, NULL);
 #else
-  void sj2_cli__init(void);
   sj2_cli__init();
+  UNUSED(uart_task); // uart_task is un-used in if we are doing cli init()
 #endif
 
   puts("Starting RTOS");

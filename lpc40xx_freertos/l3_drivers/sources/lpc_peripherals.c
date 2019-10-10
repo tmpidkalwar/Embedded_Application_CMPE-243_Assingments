@@ -2,6 +2,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+
 #include "lpc40xx.h"
 
 // clang-format off
@@ -113,13 +114,10 @@ void lpc_peripheral__interrupt_dispatcher(void) {
   function__void_f isr_to_service = lpc_peripheral__isr_registrations[isr_num];
   isr_to_service();
 
-  // Not needed since we call vRunTimeStatIsrExit() below that will also write to memory
-#if 0
   // http://www.keil.com/support/docs/3928.htm
   static volatile int memory_write_to_avoid_spurious_interrupt;
   memory_write_to_avoid_spurious_interrupt = 0;
   (void)memory_write_to_avoid_spurious_interrupt; // Avoid 'variable set but not used' warning
-#endif
 
   vRunTimeStatIsrExit();
 }

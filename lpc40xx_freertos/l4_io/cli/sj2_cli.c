@@ -4,11 +4,11 @@
 #include "task.h"
 
 #include "app_cli.h"
+#include "common_macros.h"
 #include "sj2_cli_handlers.h"
 
 /// Output all CLI to the standard output
-static void sj2_cli__output_function(app_cli__argument_t argument, const char *string) { printf("%s", string); }
-
+static void sj2_cli__output_function(app_cli__argument_t argument, const char *string);
 static void sj2_cli__task(void *p);
 static void sj2_cli__get_line(sl_string_t user_input);
 
@@ -24,9 +24,11 @@ void sj2_cli__init(void) {
   static app_cli__command_s hello_command = {.command_name = "hello",
                                              .help_message_for_command = "responds back with 'hello world'",
                                              .app_cli_handler = cli__hello};
-  static app_cli__command_s task_list = {.command_name = "tasklist",
-                                         .help_message_for_command = "Outputs list of RTOS tasks, CPU and stack usage",
-                                         .app_cli_handler = cli__task_list};
+  static app_cli__command_s task_list = {
+      .command_name = "tasklist",
+      .help_message_for_command =
+          "Outputs list of RTOS tasks, CPU and stack usage. 'tasklist reset' will reset CPU counters.",
+      .app_cli_handler = cli__task_list};
 
   // Add your CLI commands in sorted order
   app_cli__add_command_handler(&sj2_cli_struct, &hello_command);
@@ -34,7 +36,17 @@ void sj2_cli__init(void) {
 
   // In case other tasks are hogging the CPU, it would be useful to run the CLI
   // at high priority to at least be able to see what is going on
-  xTaskCreate(sj2_cli__task, "cli", 2048 / sizeof(void *), &sj2_cli_struct, PRIORITY_HIGH, NULL);
+  static StackType_t task_stack[512];
+  static StaticTask_t task_struct;
+  xTaskCreateStatic(sj2_cli__task, "cli", ARRAY_SIZE(task_stack), &sj2_cli_struct, PRIORITY_HIGH, task_stack,
+                    &task_struct);
+}
+
+static void sj2_cli__output_function(app_cli__argument_t argument, const char *string) {
+  while (*string != '\0') {
+    putchar(*string);
+    ++string;
+  }
 }
 
 static void sj2_cli__task(void *task_parameter) {
@@ -52,12 +64,23 @@ static void sj2_cli__task(void *task_parameter) {
 }
 
 static void sj2_cli__get_line(sl_string_t user_input) {
+  const char backspace = '\b';
   sl_string__clear(user_input);
 
   // As long as user does not enter a full line, continue to get input
   while (!sl_string__ends_with_newline(user_input)) {
     const char byte = getchar();
-    sl_string__append_char(user_input, byte);
+
+    // Handle backspace logic
+    if (backspace == byte) {
+      sl_string__erase_last(user_input, 1);
+      putchar(backspace);
+      putchar(' ');
+      putchar(backspace);
+    } else {
+      putchar(byte);
+      sl_string__append_char(user_input, byte);
+    }
 
     if (sl_string__is_full(user_input)) {
       break;

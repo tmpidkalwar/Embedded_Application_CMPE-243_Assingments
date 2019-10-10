@@ -94,7 +94,7 @@ static void halt(void) {
   // This statement resolves compiler warning: variable define but not used
   (void)interrupt_vector_table;
 
-  fprintf(stderr, "CPU exception has occured and the program will now halt\n");
+  fprintf(stderr, "CPU exception (interrupt) has occured and the program will now halt\n");
   while (true) {
     ;
   }
