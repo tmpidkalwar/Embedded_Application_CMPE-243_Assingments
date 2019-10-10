@@ -66,9 +66,9 @@ void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer, StackTyp
 #include "sys_time.h"
 
 static uint64_t freertos_run_time_counter_offset;
-uint32_t freertos_get_run_time_counter_value(void) {
+uint32_t freertos_hooks__get_run_time_counter_value(void) {
   return (uint32_t)(sys_time__get_uptime_us() - freertos_run_time_counter_offset);
 }
 
-void freertos_reset_run_time_stats(void) { freertos_run_time_counter_offset = sys_time__get_uptime_us(); }
+void freertos_hooks__reset_run_time_stats(void) { freertos_run_time_counter_offset = sys_time__get_uptime_us(); }
 #endif // #if (0 != configGENERATE_RUN_TIME_STATS)

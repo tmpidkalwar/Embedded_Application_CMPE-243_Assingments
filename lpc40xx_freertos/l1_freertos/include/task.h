@@ -2414,8 +2414,7 @@ void vTaskInternalSetTimeOutState( TimeOut_t * const pxTimeOut ) PRIVILEGED_FUNC
 // FreeRTOS customization
 BaseType_t uxTaskGetCpuUsage(TaskHandle_t xTask);
 void vTaskResetRunTimeStats(void);
-void vRunTimeStatIsrEntry(void);
-void vRunTimeStatIsrExit(void);
+#include "freertos_runtime_stats.h"
 
 #ifdef __cplusplus
 }

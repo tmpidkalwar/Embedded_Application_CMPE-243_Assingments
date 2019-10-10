@@ -32,6 +32,7 @@
 #define configCPU_CLOCK_HZ                      (clock__get_core_clock_hz())
 #define configTICK_RATE_HZ                      ((TickType_t) 1000)
 #define configUSE_PREEMPTION                    1
+#define RTOS_MS_TO_TICKS(milliseconds)          ((configTICK_RATE_HZ * milliseconds) / 1000)
 
 #define configMINIMAL_STACK_SIZE                ((unsigned short) 400 / sizeof(void*))
 #define configCHECK_FOR_STACK_OVERFLOW          (2)
@@ -101,12 +102,12 @@
 
 // If RTOS trace facility is enabled, then provide the high resolution timer API
 #if (0 != configUSE_TRACE_FACILITY)
-  extern uint32_t freertos_get_run_time_counter_value(void);
-  extern void freertos_reset_run_time_stats(void);
+  extern uint32_t freertos_hooks__get_run_time_counter_value(void);
+  extern void freertos_hooks__reset_run_time_stats(void);
 
   #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()  /* sys_init() is initialized before FreeRTOS starts */
-  #define portGET_RUN_TIME_COUNTER_VALUE()          freertos_get_run_time_counter_value()
-  #define portRESET_TIMER_FOR_RUN_TIME_STATS()      freertos_reset_run_time_stats()
+  #define portGET_RUN_TIME_COUNTER_VALUE()          freertos_hooks__get_run_time_counter_value()
+  #define portRESET_TIMER_FOR_RUN_TIME_STATS()      freertos_hooks__reset_run_time_stats()
 #endif
 
 /**

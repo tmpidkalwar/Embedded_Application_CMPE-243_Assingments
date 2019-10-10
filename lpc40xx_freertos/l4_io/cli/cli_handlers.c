@@ -1,4 +1,4 @@
-#include "sj2_cli_handlers.h"
+#include "cli_handlers.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -13,8 +13,10 @@ app_cli_status_e cli__hello(app_cli__argument_t argument, sl_string_t user_input
 
 app_cli_status_e cli__task_list(app_cli__argument_t argument, sl_string_t user_input_minus_command_name,
                                 app_cli__print_string_function cli_output) {
-  if (sl_string__contains_ignore_case(user_input_minus_command_name, "reset")) {
+  const int sleep_time = sl_string__to_int(user_input_minus_command_name);
+  if (sleep_time > 0) {
     vTaskResetRunTimeStats();
+    vTaskDelay(sleep_time);
   }
 
   // re-use user_input_minus_command_name as 'output_string' to save memory:
@@ -33,10 +35,13 @@ static void cli__task_list_print(sl_string_t output_string, app_cli__print_strin
   TaskStatus_t status[max_tasks];
   uint32_t total_cpu_runtime = 0;
   uint32_t total_tasks_runtime = 0;
+
+  void *unused_cli_param = NULL;
+  const uint32_t total_run_time = portGET_RUN_TIME_COUNTER_VALUE();
   const unsigned portBASE_TYPE task_count = uxTaskGetSystemState(&status[0], max_tasks, &total_cpu_runtime);
 
   sl_string__printf(output_string, "%10s  Status Pr Stack CPU%%          Time\n", "Name");
-  cli_output(NULL, output_string);
+  cli_output(unused_cli_param, output_string);
 
   for (unsigned priority_number = 0; priority_number < configMAX_PRIORITIES; priority_number++) {
     /* Print in sorted priority order */
@@ -52,8 +57,11 @@ static void cli__task_list_print(sl_string_t output_string, app_cli__print_strin
         sl_string__printf(output_string, "%10s %s %2u %5u %4u %10u us\n", task->pcTaskName,
                           task_status_table[task->eCurrentState], (unsigned)task->uxBasePriority, stack_in_bytes,
                           cpu_percent, time_us);
-        cli_output(NULL, output_string);
+        cli_output(unused_cli_param, output_string);
       }
     }
   }
+
+  sl_string__printf(output_string, "Overhead: %u uS\n", (unsigned)(total_run_time - total_tasks_runtime));
+  cli_output(unused_cli_param, output_string);
 }

@@ -4,8 +4,8 @@
 #include "task.h"
 
 #include "app_cli.h"
+#include "cli_handlers.h"
 #include "common_macros.h"
-#include "sj2_cli_handlers.h"
 
 /// Output all CLI to the standard output
 static void sj2_cli__output_function(app_cli__argument_t argument, const char *string);
@@ -24,11 +24,11 @@ void sj2_cli__init(void) {
   static app_cli__command_s hello_command = {.command_name = "hello",
                                              .help_message_for_command = "responds back with 'hello world'",
                                              .app_cli_handler = cli__hello};
-  static app_cli__command_s task_list = {
-      .command_name = "tasklist",
-      .help_message_for_command =
-          "Outputs list of RTOS tasks, CPU and stack usage. 'tasklist reset' will reset CPU counters.",
-      .app_cli_handler = cli__task_list};
+  static app_cli__command_s task_list = {.command_name = "tasklist",
+                                         .help_message_for_command =
+                                             "Outputs list of RTOS tasks, CPU and stack usage. 'tasklist <time>' will "
+                                             "display CPU utilization within this time window.",
+                                         .app_cli_handler = cli__task_list};
 
   // Add your CLI commands in sorted order
   app_cli__add_command_handler(&sj2_cli_struct, &hello_command);
