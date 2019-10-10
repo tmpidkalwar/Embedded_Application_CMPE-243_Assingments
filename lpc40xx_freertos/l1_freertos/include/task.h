@@ -2411,9 +2411,11 @@ TaskHandle_t pvTaskIncrementMutexHeldCount( void ) PRIVILEGED_FUNCTION;
  */
 void vTaskInternalSetTimeOutState( TimeOut_t * const pxTimeOut ) PRIVILEGED_FUNCTION;
 
-// FreeRTOS customization
-BaseType_t uxTaskGetCpuUsage(TaskHandle_t xTask);
-void vTaskResetRunTimeStats(void);
+/**
+ * FreeRTOS customization
+ * Keeping uxTaskGetCpuUsage() here such that 'freertos_runtime_stats.h' will not have to #include tasks.h to use TaskHandle_t
+ */
+BaseType_t uxTaskGetCpuUsage(TaskHandle_t xTask); 
 #include "freertos_runtime_stats.h"
 
 #ifdef __cplusplus

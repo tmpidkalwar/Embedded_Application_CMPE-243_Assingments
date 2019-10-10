@@ -3,7 +3,9 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#if (0 != configUSE_TRACE_FACILITY)
 static void cli__task_list_print(sl_string_t user_input_minus_command_name, app_cli__print_string_function cli_output);
+#endif
 
 app_cli_status_e cli__hello(app_cli__argument_t argument, sl_string_t user_input_minus_command_name,
                             app_cli__print_string_function cli_output) {
@@ -11,6 +13,7 @@ app_cli_status_e cli__hello(app_cli__argument_t argument, sl_string_t user_input
   return APP_CLI_STATUS__SUCCESS;
 }
 
+#if (0 != configUSE_TRACE_FACILITY)
 app_cli_status_e cli__task_list(app_cli__argument_t argument, sl_string_t user_input_minus_command_name,
                                 app_cli__print_string_function cli_output) {
   const int sleep_time = sl_string__to_int(user_input_minus_command_name);
@@ -65,3 +68,10 @@ static void cli__task_list_print(sl_string_t output_string, app_cli__print_strin
   sl_string__printf(output_string, "Overhead: %u uS\n", (unsigned)(total_run_time - total_tasks_runtime));
   cli_output(unused_cli_param, output_string);
 }
+#else
+app_cli_status_e cli__task_list(app_cli__argument_t argument, sl_string_t user_input_minus_command_name,
+                                app_cli__print_string_function cli_output) {
+  cli_output(argument, "ERROR: configUSE_TRACE_FACILITY needs to be enabled at FreeRTOSConfig.h\n");
+  return APP_CLI_STATUS__SUCCESS;
+}
+#endif /* configUSE_TRACE_FACILITY */

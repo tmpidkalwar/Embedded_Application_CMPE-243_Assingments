@@ -10,7 +10,8 @@
 /// Output all CLI to the standard output
 static void sj2_cli__output_function(app_cli__argument_t argument, const char *string);
 static void sj2_cli__task(void *p);
-static void sj2_cli__get_line(sl_string_t user_input);
+static void sj2_cli__get_line(sl_string_t input_line);
+static void sj2_cli__handle_backspace_logic(sl_string_t input_line, char input_byte);
 
 void sj2_cli__init(void) {
   // Note: Some terminals do not support color output so you may see wierd chars like '[34m'
@@ -63,27 +64,30 @@ static void sj2_cli__task(void *task_parameter) {
   }
 }
 
-static void sj2_cli__get_line(sl_string_t user_input) {
-  const char backspace = '\b';
-  sl_string__clear(user_input);
+static void sj2_cli__get_line(sl_string_t input_line) {
+  sl_string__clear(input_line);
 
   // As long as user does not enter a full line, continue to get input
-  while (!sl_string__ends_with_newline(user_input)) {
-    const char byte = getchar();
+  while (!sl_string__ends_with_newline(input_line)) {
+    const char input_byte = getchar();
+    sj2_cli__handle_backspace_logic(input_line, input_byte);
 
-    // Handle backspace logic
-    if (backspace == byte) {
-      sl_string__erase_last(user_input, 1);
-      putchar(backspace);
-      putchar(' ');
-      putchar(backspace);
-    } else {
-      putchar(byte);
-      sl_string__append_char(user_input, byte);
-    }
-
-    if (sl_string__is_full(user_input)) {
+    if (sl_string__is_full(input_line)) {
       break;
     }
+  }
+}
+
+static void sj2_cli__handle_backspace_logic(sl_string_t input_line, char input_byte) {
+  const char backspace = '\b';
+
+  if (backspace == input_byte) {
+    sl_string__erase_last(input_line, 1);
+    putchar(backspace);
+    putchar(' ');
+    putchar(backspace);
+  } else {
+    putchar(input_byte);
+    sl_string__append_char(input_line, input_byte);
   }
 }
