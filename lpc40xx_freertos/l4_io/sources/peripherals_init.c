@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "board_io.h"
+#include "common_macros.h"
 #include "delay.h"
 #include "ff.h"
 #include "i2c.h"
@@ -13,7 +14,7 @@ static void peripherals_init__mount_sd_card(void);
 static void peripherals_init__uart0_init(void);
 static void peripherals_init__i2c_init(void);
 
-void peripherals__init(void) {
+void peripherals_init(void) {
   board_io__initialize();
   peripherals_init__startup_sequence();
 
@@ -21,7 +22,7 @@ void peripherals__init(void) {
   ssp2__initialize(spi_sd_max_speed_khz);
   peripherals_init__mount_sd_card();
 
-  /// UART initialization is required in order to use <stdio.h> puts, printf() etc; @see system_calls.c
+  // UART initialization is required in order to use <stdio.h> puts, printf() etc; @see system_calls.c
   peripherals_init__uart0_init();
 
   // UART is initialized, so we can now start using printf()
@@ -34,7 +35,7 @@ void peripherals__init(void) {
 static void peripherals_init__startup_sequence(void) {
   const gpio_s leds[] = {board_io__get_led0(), board_io__get_led1(), board_io__get_led2(), board_io__get_led3()};
   for (size_t number = 0; number < 32; number++) {
-    gpio__toggle(leds[number % 4]);
+    gpio__toggle(leds[number % ARRAY_SIZE(leds)]);
     delay__ms(50);
   }
 }
@@ -78,9 +79,9 @@ static void peripherals_init__i2c_init(void) {
   const uint32_t i2c_speed_hz = UINT32_C(400) * 1000;
   i2c__initialize(I2C__2, i2c_speed_hz, clock__get_peripheral_clock_hz());
 
-  for (unsigned device = 2; device <= 254; device += 2) {
-    if (i2c__detect(I2C__2, device)) {
-      printf("I2C device detected at address: 0x%02X\n", device);
+  for (unsigned slave_address = 2; slave_address <= 254; slave_address += 2) {
+    if (i2c__detect(I2C__2, slave_address)) {
+      printf("I2C slave detected at address: 0x%02X\n", slave_address);
     }
   }
 }

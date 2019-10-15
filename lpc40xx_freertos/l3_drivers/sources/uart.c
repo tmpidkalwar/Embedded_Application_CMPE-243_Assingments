@@ -49,8 +49,8 @@ static uart_s uarts[] = {
 };
 
 static void (*const uart__isrs[])(void) = {uart0_isr, uart1_isr, uart2_isr, uart3_isr};
-static const lpc_peripheral_e uart__ids[] = {LPC_PERIPHERAL__UART0, LPC_PERIPHERAL__UART1, LPC_PERIPHERAL__UART2,
-                                             LPC_PERIPHERAL__UART3};
+static const lpc_peripheral_e uart_peripheral_ids[] = {LPC_PERIPHERAL__UART0, LPC_PERIPHERAL__UART1,
+                                                       LPC_PERIPHERAL__UART2, LPC_PERIPHERAL__UART3};
 
 /*******************************************************************************
  *
@@ -112,7 +112,7 @@ static bool uart__clear_receive_fifo(uart_s *uart_type) {
 
 static void uart__enable_receive_and_transmit_interrupts(uart_e uart) {
   uart_s *uart_type = &uarts[uart];
-  lpc_peripheral__enable_interrupt(uart__ids[uart], uart__isrs[uart]);
+  lpc_peripheral__enable_interrupt(uart_peripheral_ids[uart], uart__isrs[uart]);
 
   const uint32_t enable_rx_tx_fifo = (1 << 0) | (1 << 6);
   const uint32_t reset_rx_tx_fifo = (1 << 1) | (1 << 2);
@@ -169,7 +169,7 @@ static void uart__isr_common(uart_s *uart_type) {
 
 void uart__init(uart_e uart, uint32_t peripheral_clock, uint32_t baud_rate) {
   if (!uart__is_initialized(uart)) {
-    lpc_peripheral__turn_on_power_to(uart__ids[uart]);
+    lpc_peripheral__turn_on_power_to(uart_peripheral_ids[uart]);
 
     const float roundup_offset = 0.5;
     const uint16_t divider = (uint16_t)((peripheral_clock / (16 * baud_rate)) + roundup_offset);
@@ -195,7 +195,7 @@ void uart__init(uart_e uart, uint32_t peripheral_clock, uint32_t baud_rate) {
 }
 
 bool uart__is_initialized(uart_e uart) {
-  return lpc_peripheral__is_powered_on(uart__ids[uart]) && (0 != uarts[uart].registers->LCR);
+  return lpc_peripheral__is_powered_on(uart_peripheral_ids[uart]) && (0 != uarts[uart].registers->LCR);
 }
 
 bool uart__is_transmit_queue_initialized(uart_e uart) { return uart__is_transmit_queue_enabled(uart); }

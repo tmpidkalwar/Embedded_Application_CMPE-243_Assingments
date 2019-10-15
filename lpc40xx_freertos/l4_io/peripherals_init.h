@@ -1,3 +1,3 @@
 #pragma once
 
-void peripherals__init(void);
+void peripherals_init(void);
