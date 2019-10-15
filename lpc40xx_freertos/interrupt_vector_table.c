@@ -112,7 +112,19 @@ static void halt(void) {
   // This statement resolves compiler warning: variable define but not used
   (void)interrupt_vector_table;
 
-  fprintf(stderr, "CPU exception (interrupt) has occured and the program will now halt\n");
+  const unsigned isr_num = (*((uint8_t *)0xE000ED04));
+  fprintf(stderr, "Unexpected CPU exception ");
+  fprintf(stderr, "%u (interrupt) has occured and the program will now halt\n", isr_num);
+
+  if (isr_num < 16) {
+    const char *table[] = {"estack",      "reset",    "NMI",      "hard fault", "memory fault", "bus fault",
+                           "usage fault", "reserved", "reserved", "reserved",   "reserved",     "rtos",
+                           "debug",       "reserved", "rtos",     "rtos"};
+    fprintf(stderr, "Exception appears to be '%s'\n", table[isr_num]);
+  } else {
+    fprintf(stderr, "Did you register the interrupt correctly using lpc_peripherals.h API?");
+  }
+
   while (true) {
     ;
   }
