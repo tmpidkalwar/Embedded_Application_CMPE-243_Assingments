@@ -30,9 +30,14 @@ void sj2_cli__init(void) {
                                              "Outputs list of RTOS tasks, CPU and stack usage. 'tasklist <time>' will "
                                              "display CPU utilization within this time window.",
                                          .app_cli_handler = cli__task_list};
+  static app_cli__command_s i2c = {.command_name = "i2c",
+                                   .help_message_for_command =
+                                       "'i2c read 0xDD 0xRR <n>' OR 'i2c write 0xDD 0xRR <value> <value> ...'",
+                                   .app_cli_handler = cli__i2c};
 
   // Add your CLI commands in sorted order
   app_cli__add_command_handler(&sj2_cli_struct, &hello_command);
+  app_cli__add_command_handler(&sj2_cli_struct, &i2c);
   app_cli__add_command_handler(&sj2_cli_struct, &task_list);
 
   // In case other tasks are hogging the CPU, it would be useful to run the CLI
@@ -82,10 +87,12 @@ static void sj2_cli__handle_backspace_logic(sl_string_t input_line, char input_b
   const char backspace = '\b';
 
   if (backspace == input_byte) {
-    sl_string__erase_last(input_line, 1);
-    putchar(backspace);
-    putchar(' ');
-    putchar(backspace);
+    if (sl_string__get_length(input_line) > 0) {
+      sl_string__erase_last(input_line, 1);
+      putchar(backspace);
+      putchar(' ');
+      putchar(backspace);
+    }
   } else {
     putchar(input_byte);
     sl_string__append_char(input_line, input_byte);

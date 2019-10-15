@@ -152,6 +152,8 @@ static void uart__isr_common(uart_s *uart_type) {
     break;
 
   default: {
+    (void)uart_type->registers->LSR;
+
     volatile const uint32_t unused_to_clear_isr = uart_type->registers->LSR;
     (void)unused_to_clear_isr;
     break;
@@ -260,6 +262,8 @@ bool uart__polled_put(uart_e uart, char output_byte) {
   lpc_uart *uart_regs = uarts[uart].registers;
 
   if (uart__is_initialized(uart)) {
+    status = true;
+
     // Wait for any prior transmission to complete
     uart__wait_for_transmit_to_complete(uart_regs);
     uart_regs->THR = output_byte;
