@@ -7,11 +7,13 @@
 
 #include "board_io.h"
 #include "clock.h"
+#include "delay.h"
 #include "startup.h"
 #include "sys_time.h"
 
 extern void main(void);
 static void entry_point__halt(void);
+static void entry_point__startup_sequence(void);
 static void entry_point__uart0_init(void);
 static void entry_point__i2c_init(void);
 static void entry_point__mount_sd_card(void);
@@ -22,6 +24,7 @@ void entry_point(void) {
   clock__initialize_system_clock_96mhz();
   sys_time__init(clock__get_peripheral_clock_hz());
   board_io__initialize();
+  entry_point__startup_sequence();
 
   const uint32_t spi_sd_max_speed_khz = 24 * 1000;
   ssp2__initialize(spi_sd_max_speed_khz);
@@ -50,6 +53,14 @@ static void entry_point__halt(void) {
   fprintf(stderr, "ERROR: main() should never return, program has been halted");
   while (1) {
     ;
+  }
+}
+
+static void entry_point__startup_sequence(void) {
+  const gpio_s leds[] = {board_io__get_led0(), board_io__get_led1(), board_io__get_led2(), board_io__get_led3()};
+  for (size_t number = 0; number < 16; number++) {
+    gpio__toggle(leds[number % 4]);
+    delay__ms(100);
   }
 }
 
