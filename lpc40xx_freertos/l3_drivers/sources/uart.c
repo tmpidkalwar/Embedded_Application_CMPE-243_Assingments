@@ -98,7 +98,7 @@ static bool uart__clear_receive_fifo(uart_s *uart_type) {
    * While receive Hardware FIFO not empty, keep queuing the data. Even if xQueueSendFromISR()
    * fails (Queue is full), we still need to read RBR register otherwise interrupt will not clear
    */
-  while ((uart_type->registers->LSR & char_available_bitmask)) {
+  while (uart_type->registers->LSR & char_available_bitmask) {
     const char received_byte = uart_type->registers->RBR;
     xQueueSendFromISR(uart_type->queue_receive, &received_byte, &higher_priority_task_woke);
 

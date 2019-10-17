@@ -11,30 +11,25 @@
 MEMORY
 {
   /* Define each memory region */
-  /* 512kB (alias Flash) */
   MFlash512 (rx) : ORIGIN = 0, LENGTH = 512K
-  /* 64kB (alias RAM) */
-  RamLoc64 (rwx) : ORIGIN = 0x10000000, LENGTH = 0x10000
-  /* 32kB (alias RAM2) */
-  RamPeriph32 (rwx) : ORIGIN = 0x20000000, LENGTH = 0x8000
+  RamLoc64 (rwx) : ORIGIN = 0x10000000, LENGTH = 64K
+  RamPeriph32 (rwx) : ORIGIN = 0x20000000, LENGTH = 32K
 }
-
   /* Define a symbol for the top of each memory region */
-  __base_MFlash512 = 0x0  ; /* MFlash512 */
-  __base_Flash = 0x0 ; /* Flash */
-  __top_MFlash512 = 0x0 + 0x80000 ; /* 512K bytes */
-  __top_Flash = 0x0 + 0x80000 ; /* 512K bytes */
+  __base_MFlash512 = 0x0;
+  __base_Flash = 0x0;
+  __top_MFlash512 = 0x0 + 512k;
+  __top_Flash = 0x0 + 512k;
 
-  __base_RamLoc64 = 0x10000000  ; /* RamLoc64 */
-  __base_RAM = 0x10000000 ; /* RAM */
-  __top_RamLoc64 = 0x10000000 + 0x10000 ; /* 64K bytes */
-  __top_RAM = 0x10000000 + 0x10000 ; /* 64K bytes */
-  __base_RamPeriph32 = 0x20000000  ; /* RamPeriph32 */
+  __base_RamLoc64 = 0x10000000;
+  __base_RAM = 0x10000000;
+  __top_RamLoc64 = 0x10000000 + 64k;
+  __top_RAM = 0x10000000 + 64k;
 
-  __base_RAM2 = 0x20000000 ; /* RAM2 */
-  __top_RamPeriph32 = 0x20000000 + 0x8000 ; /* 32K bytes */
-  __top_RAM2 = 0x20000000 + 0x8000 ; /* 32K bytes */
-  __user_heap_base = __base_RAM2 ; /* SJSU-Dev2: RAM2 is solely for heap */
+  __base_RamPeriph32 = 0x20000000;
+  __base_RAM2 = 0x20000000;
+  __top_RamPeriph32 = 0x20000000 + 32k;
+  __top_RAM2 = 0x20000000 + 32k;
 
 ENTRY(entry_point)
 
@@ -157,16 +152,6 @@ SECTIONS
        PROVIDE(_edata = .);
     } > RamLoc64 AT>MFlash512
 
-    /* BSS section for RamPeriph32 */
-    .bss_RAM2 : ALIGN(4)
-    {
-       PROVIDE(__start_bss_RAM2 = .) ;
-       *(.bss.$RAM2*)
-       *(.bss.$RamPeriph32*)
-       . = ALIGN (. != 0 ? 4 : 1) ; /* avoid empty segment */
-       PROVIDE(__end_bss_RAM2 = .) ;
-    } > RamPeriph32
-
     /* MAIN BSS SECTION */
     .bss : ALIGN(4)
     {
@@ -178,14 +163,6 @@ SECTIONS
         PROVIDE(end = .);
     } > RamLoc64
 
-    /* NOINIT section for RamPeriph32 */
-    .noinit_RAM2 (NOLOAD) : ALIGN(4)
-    {
-       *(.noinit.$RAM2*)
-       *(.noinit.$RamPeriph32*)
-       . = ALIGN(4) ;
-    } > RamPeriph32
-
     /* DEFAULT NOINIT SECTION */
     .noinit (NOLOAD): ALIGN(4)
     {
@@ -195,8 +172,37 @@ SECTIONS
         _end_noinit = .;
     } > RamLoc64
 
-    PROVIDE(heap = DEFINED(__user_heap_base) ? __user_heap_base : .);
+    /* At this point, we have un-used RAM after the BSS and DATA section all the way to the top */
+    PROVIDE(__start_of_unused_ram64 = .);
+    PROVIDE(__end_of_unused_ram64 = __top_RamLoc64);
+
+    /* NOINIT section for RamPeriph32 */
+    .noinit_RAM2 (NOLOAD) : ALIGN(4)
+    {
+        KEEP(*(.persistent_ram))
+        persistent_ram = .;
+
+        KEEP(*(._noinit_ram2))
+        _noinit_ram2 = .;
+        *(.noinit_ram2*)
+       . = ALIGN(4) ;
+    } > RamPeriph32
+
+    /* BSS section for RamPeriph32 */
+    .bss_RAM2 : ALIGN(4)
+    {
+       PROVIDE(__start_bss_RAM2 = .) ;
+       *(.bss.$RAM2*)
+       *(.bss.$RamPeriph32*)
+       . = ALIGN (. != 0 ? 4 : 1) ; /* avoid empty segment */
+       PROVIDE(__end_bss_RAM2 = .) ;
+    } > RamPeriph32
+
+    /* Heap starts at the beginning of RAM2 after any entities that occupy the beginning of RAM2 such as persistent_ram */
+    PROVIDE(heap = .);
     PROVIDE(heap_end = __top_RAM2);
+
+    /* Stack is at the top of RAM64 unless explicitly defined by the user */
     PROVIDE(StackTop = DEFINED(__user_stack_top) ? __user_stack_top : __top_RamLoc64 - 0);
 }
 

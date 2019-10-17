@@ -34,7 +34,7 @@
 #define configUSE_PREEMPTION                    1
 #define RTOS_MS_TO_TICKS(milliseconds)          ((configTICK_RATE_HZ * milliseconds) / 1000)
 
-#define configMINIMAL_STACK_SIZE                ((unsigned short) 400 / sizeof(void*))
+#define configMINIMAL_STACK_SIZE                (384U / sizeof(void*))
 #define configCHECK_FOR_STACK_OVERFLOW          (2)
 
 #define configMAX_TASK_NAME_LEN                 (12)

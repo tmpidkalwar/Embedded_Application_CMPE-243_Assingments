@@ -17,8 +17,8 @@ int main(void) {
   led0 = board_io__get_led0();
   led1 = board_io__get_led1();
 
-  xTaskCreate(blink_task, "led0", (512U / sizeof(void *)), (void *)&led0, PRIORITY_LOW, NULL);
-  xTaskCreate(blink_task, "led1", (512U / sizeof(void *)), (void *)&led1, PRIORITY_LOW, NULL);
+  xTaskCreate(blink_task, "led0", configMINIMAL_STACK_SIZE, (void *)&led0, PRIORITY_LOW, NULL);
+  xTaskCreate(blink_task, "led1", configMINIMAL_STACK_SIZE, (void *)&led1, PRIORITY_LOW, NULL);
 
   // It is advised to either run the uart_task, or the SJ2 command-line (CLI), but not both
   // Change '#if 0' to '#if 1' and vice versa to try it out
@@ -39,6 +39,7 @@ int main(void) {
 static void blink_task(void *params) {
   const gpio_s led = *((gpio_s *)params);
 
+  // Warning: This task starts with very minimal stack, so do not use printf() API here to avoid stack overflow
   while (true) {
     gpio__toggle(led);
     vTaskDelay(500);
