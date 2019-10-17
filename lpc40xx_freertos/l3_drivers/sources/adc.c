@@ -41,6 +41,10 @@ uint16_t adc__get_adc_value(adc_channel_e channel_num) {
     LPC_ADC->CR &= ~(channel_masks | start_conversion_mask);
     // Set the channel number and start the conversion now
     LPC_ADC->CR |= (1 << channel_num) | start_conversion;
+
+    while (!(LPC_ADC->GDR & (1 << 31))) {
+      ;
+    }                                           // Wait till conversion is complete}
     result = (LPC_ADC->GDR >> 4) & twelve_bits; // 12bits - B15:B4
   }
 
