@@ -1,35 +1,38 @@
-/*
- * GENERATED FILE - DO NOT EDIT
- * (c) Code Red Technologies Ltd, 2008-2013
- * (c) NXP Semiconductors 2013-2018
- * Generated linker script file for LPC4078
- * Created from linkscript.ldt by FMCreateLinkLibraries
- * Using Freemarker v2.3.23
- * LPCXpresso v8.2.2 [Build 650] [2016-09-09]  on Jun 3, 2018 12:50:46 AM
- */
-
 MEMORY
 {
-  /* Define each memory region */
-  MFlash512 (rx) : ORIGIN = 0, LENGTH = 512K
-  RamLoc64 (rwx) : ORIGIN = 0x10000000, LENGTH = 64K
+  MFlash512 (rx)    : ORIGIN = 0x00000000, LENGTH = 512K
+  RamLoc64 (rwx)    : ORIGIN = 0x10000000, LENGTH = 64K
   RamPeriph32 (rwx) : ORIGIN = 0x20000000, LENGTH = 32K
 }
-  /* Define a symbol for the top of each memory region */
-  __base_MFlash512 = 0x0;
-  __base_Flash = 0x0;
-  __top_MFlash512 = 0x0 + 512k;
-  __top_Flash = 0x0 + 512k;
 
-  __base_RamLoc64 = 0x10000000;
-  __base_RAM = 0x10000000;
-  __top_RamLoc64 = 0x10000000 + 64k;
-  __top_RAM = 0x10000000 + 64k;
+/*************************************************
+                                                  *
+     64K RAM +-----Stack Top   +-----+ 32K RAM    *
+             |    ||           |     |            *
+             |    \/           |     |            *
+             |     |           |     |            *
+             |     |           |     |            *
+             |    /\ heap      |    /\            *
+             |    || overflow  |    ||            *
+             .-----.           +-----Heap Start   *
+             |bbbbb|                              *
+             |bbbbb| *bss                         *
+             .-----.                              *
+             |ddddd|                              *
+             |ddddd| *data                        *
+             .-----.                              *
+**************************************************
+*/
 
-  __base_RamPeriph32 = 0x20000000;
-  __base_RAM2 = 0x20000000;
-  __top_RamPeriph32 = 0x20000000 + 32k;
-  __top_RAM2 = 0x20000000 + 32k;
+/* Define a symbol for the top of each memory region */
+__base_Flash     = 0x00000000;
+__top_Flash      = __base_Flash + 512k;
+
+__base_RamLoc64  = 0x10000000;
+__top_RamLoc64   = __base_RamLoc64 + 64k;
+
+__base_RamPeriph32 = 0x20000000;
+__top_RamPeriph32  = __base_RamPeriph32 + 32k;
 
 ENTRY(entry_point)
 
@@ -41,6 +44,7 @@ SECTIONS
         FILL(0xff)
         __vectors_start__ = ABSOLUTE(.) ;
         KEEP(*(.interrupt_vector_table))
+
         /* Global Section Table */
         . = ALIGN(4) ;
         section_table_start = .;
@@ -53,13 +57,14 @@ SECTIONS
         LONG(  SIZEOF(.data_RAM2));
         data_section_table_end = .;
         bss_section_table = .;
+
         LONG(    ADDR(.bss));
         LONG(  SIZEOF(.bss));
         LONG(    ADDR(.bss_RAM2));
         LONG(  SIZEOF(.bss_RAM2));
         bss_section_table_end = .;
         section_table_end = . ;
-      /* End of Global Section Table */
+        /* End of Global Section Table */
 
         *(.after_vectors*)
 
@@ -129,7 +134,7 @@ SECTIONS
         *(.data.$RAM2*)
         *(.data.$RamPeriph32*)
         . = ALIGN(4) ;
-        PROVIDE(__end_data_RAM2 = .) ;
+        PROVIDE(_edata_peripheral = .) ;
      } > RamPeriph32 AT>MFlash512
 
     /* MAIN DATA SECTION */
@@ -191,34 +196,25 @@ SECTIONS
     /* BSS section for RamPeriph32 */
     .bss_RAM2 : ALIGN(4)
     {
-       PROVIDE(__start_bss_RAM2 = .) ;
+       PROVIDE(_bbss_ram2 = .) ;
        *(.bss.$RAM2*)
        *(.bss.$RamPeriph32*)
        . = ALIGN (. != 0 ? 4 : 1) ; /* avoid empty segment */
-       PROVIDE(__end_bss_RAM2 = .) ;
+       PROVIDE(_ebss_ram2 = .) ;
     } > RamPeriph32
 
     /* Heap starts at the beginning of RAM2 after any entities that occupy the beginning of RAM2 such as persistent_ram */
-    PROVIDE(heap = .);
-    PROVIDE(heap_end = __top_RAM2);
+    PROVIDE(_bheap = .);
+    PROVIDE(_eheap = __top_RamPeriph32);
 
     /* Stack is at the top of RAM64 unless explicitly defined by the user */
-    PROVIDE(StackTop = DEFINED(__user_stack_top) ? __user_stack_top : __top_RamLoc64 - 0);
+    PROVIDE(_stack_top = DEFINED(__user_stack_top) ? __user_stack_top : __top_RamLoc64 - 0);
 }
 
-PROVIDE(_bheap = heap);
-PROVIDE(_eheap = heap_end);
-
-PROVIDE(_estack = StackTop);
+PROVIDE(_estack = _stack_top);
 
 PROVIDE(_bdata_lma = LOADADDR(.data));
 PROVIDE(_bdata_vma = ADDR(.data));
 
 PROVIDE(_bdata_lma_peripheral = LOADADDR(.data_RAM2));
 PROVIDE(_bdata_vma_peripheral = ADDR(.data_RAM2));
-PROVIDE(_edata_peripheral = __end_data_RAM2);
-
-PROVIDE(_bbss = _bss);
-
-PROVIDE(_bbss_peripheral = __start_bss_RAM2);
-PROVIDE(_ebss_peripheral = __end_bss_RAM2);

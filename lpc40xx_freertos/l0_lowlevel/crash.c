@@ -38,9 +38,9 @@ bool crash__report_if_occurred(void) {
 
     fprintf(stderr, "\n"
                     "  Find the *.lst file in your _build directory, and lookup\n"
-                    "  the PC value to locate which function caused this\n"
-                    "  The LR is the 'previous' function that was running\n"
-                    "  R0-R3 are parameters to functions\n");
+                    "  the PC value to locate which function caused this.\n"
+                    "  The LR is the 'previous' function that was running.\n"
+                    "  R0-R3 are parameters to functions.\n");
   }
 
   crash__clear_record();

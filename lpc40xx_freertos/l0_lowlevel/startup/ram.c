@@ -46,10 +46,10 @@ static void ram__init_data_sram_peripheral(void) {
 }
 
 static void ram__init_bss_sram_main(void) {
-  extern void *_bbss;
+  extern void *_bss;
   extern void *_ebss;
 
-  uint8_t *ptr = (uint8_t *)&_bbss;
+  uint8_t *ptr = (uint8_t *)&_bss;
   while (ptr < (uint8_t *)&_ebss) {
     *ptr = 0U;
     ptr++;
@@ -57,11 +57,11 @@ static void ram__init_bss_sram_main(void) {
 }
 
 static void ram__init_bss_sram_peripheral(void) {
-  extern void *_bbss_peripheral;
-  extern void *_ebss_peripheral;
+  extern void *_bbss_ram2;
+  extern void *_ebss_ram2;
 
-  uint8_t *ptr = (uint8_t *)&_bbss_peripheral;
-  while (ptr < (uint8_t *)&_ebss_peripheral) {
+  uint8_t *ptr = (uint8_t *)&_bbss_ram2;
+  while (ptr < (uint8_t *)&_ebss_ram2) {
     *ptr = 0U;
     ptr++;
   }

@@ -152,8 +152,6 @@ static void uart__isr_common(uart_s *uart_type) {
     break;
 
   default: {
-    (void)uart_type->registers->LSR;
-
     volatile const uint32_t unused_to_clear_isr = uart_type->registers->LSR;
     (void)unused_to_clear_isr;
     break;
