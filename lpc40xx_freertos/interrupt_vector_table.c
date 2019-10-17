@@ -1,5 +1,4 @@
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 
 #include "crash.h"
@@ -25,7 +24,12 @@ extern void lpc_peripheral__interrupt_dispatcher(void);
 
 static void halt(void);
 static void isr_hard_fault(void);
-__attribute__((used)) static void isr_hard_fault_handler(unsigned long *hardfault_args);
+
+/**
+ * This is non static otherwise compiler optimizes this function away but it is used in assembly code
+ * Alternative is to use '__attribute__((used))' attribute prior to isr_hard_fault_handler()
+ */
+void isr_hard_fault_handler(unsigned long *hardfault_args);
 
 __attribute__((section(".interrupt_vector_table"))) const function__void_f interrupt_vector_table[] = {
     /**
@@ -117,18 +121,17 @@ static void halt(void) {
 }
 
 static void isr_hard_fault(void) {
-  __asm__("MOVS   R0, #4  \n"
-          "MOV    R1, LR  \n"
-          "TST    R0, R1  \n"
-          "BEQ    _MSP    \n"
-          "MRS    R0, PSP \n"
-          "B      isr_hard_fault_handler  \n"
-          "_MSP:  \n"
-          "MRS    R0, MSP \n"
-          "B      isr_hard_fault_handler  \n");
+  __asm__ volatile("tst lr, #4                                    \n"
+                   "ite eq                                        \n"
+                   "mrseq r0, msp                                 \n"
+                   "mrsne r0, psp                                 \n"
+                   "ldr r1, [r0, #24]                             \n"
+                   "ldr r2, handler_address                       \n"
+                   "bx r2                                         \n"
+                   "handler_address: .word isr_hard_fault_handler \n");
 }
 
-static void isr_hard_fault_handler(unsigned long *hardfault_args) {
+void isr_hard_fault_handler(unsigned long *hardfault_args) {
   crash__registers_s *c = crash__record_get();
 
   c->registers[0] = ((unsigned long)hardfault_args[0]);

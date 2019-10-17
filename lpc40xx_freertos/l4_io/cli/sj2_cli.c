@@ -22,9 +22,9 @@ void sj2_cli__init(void) {
   sj2_cli_struct = app_cli__initialize(4, sj2_cli__output_function, !color_output, separator);
 
   // Need static struct that does not go out of scope
-  static app_cli__command_s hello_command = {.command_name = "hello",
-                                             .help_message_for_command = "responds back with 'hello world'",
-                                             .app_cli_handler = cli__hello};
+  static app_cli__command_s hello_command = {.command_name = "crash",
+                                             .help_message_for_command = "Deliberately crashes the system",
+                                             .app_cli_handler = cli__crash_me};
   static app_cli__command_s task_list = {.command_name = "tasklist",
                                          .help_message_for_command =
                                              "Outputs list of RTOS tasks, CPU and stack usage. 'tasklist <time>' will "

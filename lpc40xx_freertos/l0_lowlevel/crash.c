@@ -3,7 +3,7 @@
 #include "crash.h"
 
 /**
- * Keep the persistent_data at a specific location of RAM that is not wiped out on startup
+ * Keep this RAM data at a specific location that is not wiped out on startup
  * Note: This section is not part of the *data or *bss section
  */
 __attribute__((section(".persistent_ram"))) static crash__registers_s crash_registers;
@@ -26,20 +26,22 @@ bool crash__report_if_occurred(void) {
   if (crash__signature == crash_registers.signature && ~crash__signature == crash_registers.signature_inverted) {
     crash_occured = true;
 
-    fprintf(stderr, "WARNING: We crashed previously\n");
-    fprintf(stderr, "     PC: 0x%08lX\n", crash_registers.pc);
-    fprintf(stderr, "     LR: 0x%08lX\n", crash_registers.lr);
-    fprintf(stderr, "    PSR: 0x%08lX\n", crash_registers.psr);
+    fprintf(stderr, "----------------------------------------\n"
+                    "---- WARNING: We crashed previously ----\n");
 
-    fprintf(stderr, "     R0: 0x%08lX\n", crash_registers.registers[0]);
-    fprintf(stderr, "     R1: 0x%08lX\n", crash_registers.registers[1]);
-    fprintf(stderr, "     R2: 0x%08lX\n", crash_registers.registers[2]);
-    fprintf(stderr, "     R3: 0x%08lX\n", crash_registers.registers[3]);
+    fprintf(stderr, "  PC: 0x%08lX\n", crash_registers.pc);
+    fprintf(stderr, "  LR: 0x%08lX\n", crash_registers.lr);
+    fprintf(stderr, " PSR: 0x%08lX\n", crash_registers.psr);
+
+    fprintf(stderr, "  R0: 0x%08lX\n", crash_registers.registers[0]);
+    fprintf(stderr, "  R1: 0x%08lX\n", crash_registers.registers[1]);
+    fprintf(stderr, "  R2: 0x%08lX\n", crash_registers.registers[2]);
+    fprintf(stderr, "  R3: 0x%08lX\n", crash_registers.registers[3]);
 
     fprintf(stderr, "\n"
                     "  Find the *.lst file in your _build directory, and lookup\n"
                     "  the PC value to locate which function caused this.\n"
-                    "  The LR is the 'previous' function that was running.\n"
+                    "  The LR should be the 'previous' function that was running.\n"
                     "  R0-R3 are parameters to functions.\n");
   }
 

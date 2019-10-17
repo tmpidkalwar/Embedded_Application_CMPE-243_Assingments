@@ -49,7 +49,7 @@ static void blink_task(void *params) {
 // This sends periodic messages over printf() which uses system_calls.c to send them to UART0
 static void uart_task(void *params) {
   TickType_t previous_tick = 0;
-  long ticks = 0;
+  TickType_t ticks = 0;
 
   while (true) {
     // This loop will repeat at precise task delay, even if the logic below takes variable amount of ticks
@@ -63,7 +63,7 @@ static void uart_task(void *params) {
      *  - During debugging in case system crashes before all output of printf() is sent
      */
     ticks = xTaskGetTickCount();
-    fprintf(stderr, "This is a polled version of printf used for debugging ... finished in");
+    fprintf(stderr, "%u: This is a polled version of printf used for debugging ... finished in", (unsigned)ticks);
     fprintf(stderr, " %lu ticks\n", (xTaskGetTickCount() - ticks));
 
     /* This deposits data to an outgoing queue and doesn't block the CPU

@@ -42,8 +42,8 @@ static void cli__i2c_read(const sl_string_t command_params, app_cli__print_strin
 
   unsigned slave_address = 0, slave_register = 0, count = 1;
 
-  if (sl_string__scanf(command_params, "%u %u %u", &slave_address, &slave_register, &count) >= 2) {
-    if (!i2c__read_slave_data(i2c_bus, slave_address, slave_register, &buffer[0], count)) {
+  if (sl_string__scanf(command_params, "%x %x %x", &slave_address, &slave_register, &count) >= 2) {
+    if (i2c__read_slave_data(i2c_bus, slave_address, slave_register, &buffer[0], count)) {
       sl_string__printf(output, "I2C Read of Slave 0x%02X\n", slave_address);
       cli_output(unused_cli_argument, output);
 
@@ -70,7 +70,7 @@ static void cli__i2c_write(sl_string_t command_params, app_cli__print_string_fun
   sl_string_t output = sl_string__initialize(string_memory, sizeof(string_memory));
 
   // i2c write 0xDD 0xRR <value> <value> ...
-  if (2 == sl_string__scanf(command_params, "%u %u", &slave_address, &slave_register)) {
+  if (2 == sl_string__scanf(command_params, "%x %x", &slave_address, &slave_register)) {
     sl_string__erase_first_word(command_params, ' ');
     sl_string__erase_first_word(command_params, ' ');
 
@@ -83,7 +83,7 @@ static void cli__i2c_write(sl_string_t command_params, app_cli__print_string_fun
     }
 
     if (i2c__write_slave_data(i2c_bus, slave_address, slave_register, &buffer[0], count)) {
-      sl_string__printf(output, "Wrote %zu bytes to slave 0x%02X\n", count, slave_address);
+      sl_string__printf(output, "Wrote %u bytes to slave 0x%02X\n", count, slave_address);
       cli_output(unused_cli_argument, output);
 
       for (size_t index = 0; index < count; index++) {
