@@ -22,23 +22,24 @@ void sj2_cli__init(void) {
   sj2_cli_struct = app_cli__initialize(4, sj2_cli__output_function, !color_output, separator);
 
   // Need static struct that does not go out of scope
-  static app_cli__command_s hello_command = {.command_name = "crash",
-                                             .help_message_for_command = "Deliberately crashes the system",
-                                             .app_cli_handler = cli__crash_me};
+  static app_cli__command_s crash = {.command_name = "crash",
+                                     .help_message_for_command =
+                                         "Deliberately crashes the system to demonstrate how to debug a crash",
+                                     .app_cli_handler = cli__crash_me};
+  static app_cli__command_s i2c = {.command_name = "i2c",
+                                   .help_message_for_command =
+                                       "'i2c read 0xDD 0xRR <n>' OR 'i2c write 0xDD 0xRR <value> <value> ...'",
+                                   .app_cli_handler = cli__i2c};
   static app_cli__command_s task_list = {.command_name = "tasklist",
                                          .help_message_for_command =
                                              "Outputs list of RTOS tasks, CPU and stack usage. 'tasklist <time>' will "
                                              "display CPU utilization within this time window.",
                                          .app_cli_handler = cli__task_list};
-  static app_cli__command_s i2c = {.command_name = "i2c",
-                                   .help_message_for_command =
-                                       "'i2c read 0xDD 0xRR <n>' OR 'i2c write 0xDD 0xRR <value> <value> ...'",
-                                   .app_cli_handler = cli__i2c};
 
-  // Add your CLI commands in sorted order
-  app_cli__add_command_handler(&sj2_cli_struct, &hello_command);
-  app_cli__add_command_handler(&sj2_cli_struct, &i2c);
+  // Add your CLI commands in descending sorted order
   app_cli__add_command_handler(&sj2_cli_struct, &task_list);
+  app_cli__add_command_handler(&sj2_cli_struct, &i2c);
+  app_cli__add_command_handler(&sj2_cli_struct, &crash);
 
   // In case other tasks are hogging the CPU, it would be useful to run the CLI
   // at high priority to at least be able to see what is going on

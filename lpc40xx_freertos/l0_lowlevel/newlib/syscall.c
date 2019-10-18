@@ -1,12 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// These symbols are defined by the linker script
-extern uint32_t _bheap;
-extern uint32_t _eheap;
-extern uint32_t __start_of_unused_ram64;
-extern uint32_t __end_of_unused_ram64;
-
 static void *sbrk_ram1(size_t requested_byte_count);
 static void *sbrk_ram2(size_t requested_byte_count);
 
@@ -29,7 +23,11 @@ void *_sbrk(size_t requested_byte_count) {
 }
 
 static void *sbrk_ram1(size_t requested_byte_count) {
-  static void *next_free_heap = (void *)&_bheap;
+  // These symbols are defined by the linker script
+  extern uint32_t _heap_start;
+  extern uint32_t _heap_end;
+
+  static void *next_free_heap = (void *)&_heap_start;
   void *memory_to_return = next_free_heap;
   next_free_heap += requested_byte_count;
 
@@ -39,7 +37,7 @@ static void *sbrk_ram1(size_t requested_byte_count) {
    *   1. Maybe we still have a small chunk we could still serve in the future
    *   2. We do not want to increment next_free_heap and go out of bounds to wrap
    */
-  if (!((next_free_heap >= (void *)&_bheap) && (next_free_heap < (void *)&_eheap))) {
+  if (!((next_free_heap >= (void *)&_heap_start) && (next_free_heap < (void *)&_heap_end))) {
     memory_to_return = NULL;
     next_free_heap -= requested_byte_count;
   }
@@ -48,6 +46,9 @@ static void *sbrk_ram1(size_t requested_byte_count) {
 }
 
 static void *sbrk_ram2(size_t requested_byte_count) {
+  extern uint32_t __start_of_unused_ram64;
+  extern uint32_t __end_of_unused_ram64;
+
   static void *next_free_heap = (void *)&__start_of_unused_ram64;
   void *memory_to_return = next_free_heap;
   next_free_heap += requested_byte_count;

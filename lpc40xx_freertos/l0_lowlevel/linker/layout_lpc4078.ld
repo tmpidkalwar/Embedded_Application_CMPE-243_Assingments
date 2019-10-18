@@ -139,22 +139,21 @@ SECTIONS
     .data : ALIGN(4)
     {
        FILL(0xff)
-       _data = . ;
        *(vtable)
        *(.ramfunc*)
        *(.data*)
        . = ALIGN(4) ;
-       PROVIDE(_edata = .);
+       PROVIDE(_data_end = .);
     } > ram_64k AT>flash_512k
 
     /* BSS SECTION */
     .bss : ALIGN(4)
     {
-        _bss = .;
+        _bss_start = .;
         *(.bss*)
         *(COMMON)
         . = ALIGN(4) ;
-        PROVIDE(_ebss = .);
+        PROVIDE(_bss_end = .);
         PROVIDE(end = .);
     } > ram_64k
 
@@ -178,28 +177,27 @@ SECTIONS
     .data_ram2 : ALIGN(4)
     {
         FILL(0xff)
-        PROVIDE(__start_data_ram2 = .) ;
         *(.ramfunc.$ram2)
         *(.ramfunc.$ram_32k)
         *(.data.$ram2*)
         *(.data.$ram_32k*)
         . = ALIGN(4) ;
-        PROVIDE(_edata_peripheral = .) ;
+        PROVIDE(_data_end_ram2 = .) ;
      } > ram_32k AT>flash_512k
 
     /* BSS section for ram_32k */
     .bss_ram2 : ALIGN(4)
     {
-       PROVIDE(_bss_ram2 = .) ;
+        _bss_start_ram2 = .;
        *(.bss.$ram2*)
        *(.bss.$ram_32k*)
        . = ALIGN (. != 0 ? 4 : 1) ; /* avoid empty segment */
-       PROVIDE(_ebss_ram2 = .) ;
+       PROVIDE(_bss_end_ram2 = .) ;
     } > ram_32k
 
     /* Heap starts at the beginning of ram2 after any entities that occupy the beginning of ram2 such as persistent_ram */
-    PROVIDE(_bheap = .);
-    PROVIDE(_eheap = __top_ram_32k);
+    PROVIDE(_heap_start = .);
+    PROVIDE(_heap_end = __top_ram_32k);
 
     /* Stack is at the top of RAM64 unless explicitly defined by the user */
     PROVIDE(_estack = DEFINED(__user_stack_top) ? __user_stack_top : __top_ram_64k - 0);

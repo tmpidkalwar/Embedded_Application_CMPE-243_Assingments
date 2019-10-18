@@ -120,6 +120,10 @@ static void halt(void) {
   }
 }
 
+/**
+ * Explanation of register usage dictated by ARM's EABI:
+ * https://stackoverflow.com/questions/261419/what-registers-to-save-in-the-arm-c-calling-convention
+ */
 static void isr_hard_fault(void) {
   __asm__ volatile("tst lr, #4                                    \n"
                    "ite eq                                        \n"
