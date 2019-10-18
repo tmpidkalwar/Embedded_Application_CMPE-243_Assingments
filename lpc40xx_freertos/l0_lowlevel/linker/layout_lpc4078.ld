@@ -47,29 +47,6 @@ SECTIONS
         __vectors_start__ = ABSOLUTE(.) ;
         KEEP(*(.interrupt_vector_table))
 
-        /* Global Section Table */
-        . = ALIGN(4) ;
-        section_table_start = .;
-        data_section_table = .;
-        LONG(LOADADDR(.data));
-        LONG(    ADDR(.data));
-        LONG(  SIZEOF(.data));
-        LONG(LOADADDR(.data_ram2));
-        LONG(    ADDR(.data_ram2));
-        LONG(  SIZEOF(.data_ram2));
-        data_section_table_end = .;
-        bss_section_table = .;
-
-        LONG(    ADDR(.bss));
-        LONG(  SIZEOF(.bss));
-        LONG(    ADDR(.bss_ram2));
-        LONG(  SIZEOF(.bss_ram2));
-        bss_section_table_end = .;
-        section_table_end = . ;
-        /* End of Global Section Table */
-
-        *(.after_vectors*)
-
         /* C++ constructors etc */
         . = ALIGN(4);
         KEEP(*(.init))
@@ -164,36 +141,10 @@ SECTIONS
     /* NOINIT and PERSISTENT RAM section for ram_32k */
     .noinit_ram2 (NOLOAD) : ALIGN(4)
     {
-        KEEP(*(.persistent_ram))
-        persistent_ram = .;
-
-        KEEP(*(._noinit_ram2))
-        _noinit_ram2 = .;
-        *(.noinit_ram2*)
+        *(.persistent_ram)
        . = ALIGN(4) ;
     } > ram_32k
 
-    /* DATA section for ram_32k */
-    .data_ram2 : ALIGN(4)
-    {
-        FILL(0xff)
-        *(.ramfunc.$ram2)
-        *(.ramfunc.$ram_32k)
-        *(.data.$ram2*)
-        *(.data.$ram_32k*)
-        . = ALIGN(4) ;
-        PROVIDE(_data_end_ram2 = .) ;
-     } > ram_32k AT>flash_512k
-
-    /* BSS section for ram_32k */
-    .bss_ram2 : ALIGN(4)
-    {
-        _bss_start_ram2 = .;
-       *(.bss.$ram2*)
-       *(.bss.$ram_32k*)
-       . = ALIGN (. != 0 ? 4 : 1) ; /* avoid empty segment */
-       PROVIDE(_bss_end_ram2 = .) ;
-    } > ram_32k
 
     /* Heap starts at the beginning of ram2 after any entities that occupy the beginning of ram2 such as persistent_ram */
     PROVIDE(_heap_start = .);
@@ -205,6 +156,3 @@ SECTIONS
 
 PROVIDE(_bdata_lma = LOADADDR(.data));
 PROVIDE(_bdata_vma = ADDR(.data));
-
-PROVIDE(_bdata_lma_peripheral = LOADADDR(.data_ram2));
-PROVIDE(_bdata_vma_peripheral = ADDR(.data_ram2));
