@@ -1,4 +1,7 @@
 import os
+import sys
+
+import osops
 
 CORE = "cortex-m4"
 OPTIMIZATION_LEVEL = "s"
@@ -78,5 +81,18 @@ def objcopy_generator(source, target, env, for_signature):
 env_arm["BUILDERS"]["Objcopy"] = Builder(generator=objcopy_generator)
 env_arm["BUILDERS"]["Objdump"] = Builder(action="$OBJDUMP --source --all-headers --demangle --line-numbers --wide $SOURCE > $TARGET")
 env_arm["BUILDERS"]["Size"] = Builder(action="$SIZE --format=berkeley $SOURCE")
+
+if osops.is_windows():
+    print("-- Using ARM compiler on WINDOWS")
+    osops.prepend_env_var(env_arm, Dir("#/compiler/windows/gcc-arm-none-eabi-8-2019-q3-update/bin"))
+elif osops.is_linux():
+    print("-- Using ARM compiler on LINUX")
+    osops.prepend_env_var(env_arm, Dir("#/compiler/linux/gcc-arm-none-eabi-8-2019-q3-update/bin"))
+elif osops.is_macos():
+    print("-- Using ARM compiler on MAC")
+    osops.prepend_env_var(env_arm, Dir("#/compiler/mac/gcc-arm-none-eabi-8-2019-q3-update/bin"))
+else:
+    print("[{}] is an unsupported OS!".format(sys.platform))
+    sys.exit(-1)
 
 Export("env_arm")

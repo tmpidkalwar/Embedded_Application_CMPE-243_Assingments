@@ -12,17 +12,6 @@ import os
 import sys
 
 
-"""
-CLI arguments
-"""
-AddOption(
-    "--project",
-    metavar="<directory name>",
-    default="lpc40xx_freertos",
-    help="Specify a target project directory to build."
-)
-
-
 def main():
     project_dirpath = GetOption("project")
 
@@ -40,6 +29,8 @@ def main():
 
     Export("project_dirnode")
 
+    register_environments()
+
     SConscript("SConscript")
 
 
@@ -52,6 +43,12 @@ def has_subsidary_scons(dirnode):
     dirnode = Dir(dirnode)
     filenames = os.listdir(dirnode.abspath)
     return len(list(filter(lambda filename: filename == "SConscript", filenames))) > 0
+
+
+def register_environments():
+    env_dirnode = Dir("#/site_scons/environments")
+    for filename in os.listdir(env_dirnode.abspath):
+        SConscript(env_dirnode.File(filename))
 
 
 main()

@@ -53,30 +53,15 @@ EXCLUDED_SRC_FILES = [
 """
 Import build environment
 """
-SConscript(REPO_ROOT_DIR.File("env_arm"))
 Import("env_arm")
+Import("env_x86")
 
 """ Add/modify additional parameters """
 env_arm = env_arm.Clone(
     tools=["clangformat"]
 )
 
-if osops.is_windows():
-  print("-- Using ARM compiler on WINDOWS")
-  osops.prepend_env_var(env_arm, REPO_ROOT_DIR.Dir("compiler/windows/gcc-arm-none-eabi-8-2019-q3-update/bin"))
-elif osops.is_linux():
-  print("-- Using ARM compiler on LINUX")
-  osops.prepend_env_var(env_arm, REPO_ROOT_DIR.Dir("compiler/linux/gcc-arm-none-eabi-8-2019-q3-update/bin"))
-elif osops.is_macos():
-  print("-- Using ARM compiler on MAC")
-  osops.prepend_env_var(env_arm, REPO_ROOT_DIR.Dir("compiler/mac/gcc-arm-none-eabi-8-2019-q3-update/bin"))
-else:
-  print("[{}] is an unsupported OS!".format(sys.platform))
-  exit(-1)
-
 env_arm.VariantDir(variant_dir=VARIANT_DIR, src_dir=Dir("."), duplicate=0)
-
-env_arm["CPPDEFINES"] += []
 
 env_arm["LINKFLAGS"] += [
     "-Wl,-Map,{}".format(MAP_FILE.abspath),
@@ -127,6 +112,8 @@ lst_filenodes = env_arm.Objdump(target=VARIANT_DIR.File("{}.lst".format(PROJECT_
 size_filenodes = env_arm.Size(target=VARIANT_DIR.File("{}.size".format(PROJECT_DIR.name)), source=elf_filenodes)
 
 Depends(elf_filenodes, LINKER_FILES)
+
+exe_filenodes = env_x86.Program(target=VARIANT_DIR.File("x86_main"), source=REPO_ROOT_DIR.File("x86_main.c"))
 
 
 """
