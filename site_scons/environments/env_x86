@@ -25,9 +25,10 @@ if osops.is_windows():
 elif osops.is_linux():
     pass
 elif osops.is_macos():
-    raise NotImplementedError
+    pass
 else:
     print("[{}] is an unsupported OS!".format(sys.platform))
     sys.exit(-1)
 
 Export("env_x86")
+Return("env_x86")
