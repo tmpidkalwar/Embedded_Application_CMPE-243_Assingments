@@ -88,8 +88,9 @@ def unittest_method(env, source, target, sources=None, verbose=False):
             dependent_source_filenodes, mock_header_filenodes = find_dependencies_from_sources(filenode_ut, sources, verbose)
             for filenode in dependent_source_filenodes:
                 if filenode not in dependent_srcpath_objpath_map:
-                    obj_filenodes = env_ut.Object(target=fsops.ch_target_filenode(filenode, target.Dir(OBJ_DIRNAME), "o"), source=filenode)
-                    dependent_srcpath_objpath_map[filenode] = obj_filenodes[0]
+                    objs = env_ut.Object(target=fsops.ch_target_filenode(filenode, target.Dir(OBJ_DIRNAME), "o"), source=filenode)
+                    dependent_srcpath_objpath_map[filenode] = objs[0]
+                    obj_filenodes += objs
                 else:
                     obj_filenodes.append(dependent_srcpath_objpath_map[filenode])
 
@@ -181,6 +182,7 @@ def find_dependencies_from_sources(filenode, sources, verbose=False):
             for header_filenode in sources.include_filenodes:
                 if mock_header_filename == header_filenode.name:
                     mock_header_filenodes.append(header_filenode)
+                    break
             else:
                 missing_mock_header_filenames.append(mock_header_filename)
 
