@@ -58,7 +58,7 @@ static void periodic_scheduler__check_flag(periodic_scheduler_s *periodic_task) 
 }
 static void periodic_scheduler__task_monitor(void *param) {
   // We let all the other tasks run first, and then check their flags
-  while (1) {
+  while (true) {
     vTaskDelay(1);
     periodic_scheduler__check_flag(&periodic_scheduler__1000Hz);
     periodic_scheduler__check_flag(&periodic_scheduler__100Hz);
