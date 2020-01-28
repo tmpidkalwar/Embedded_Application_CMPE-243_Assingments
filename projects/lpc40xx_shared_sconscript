@@ -21,16 +21,15 @@ Import("project_dirnode")
 """
 Define file nodes and directory nodes
 """
-REPO_ROOT_DIR = Dir("#")
 PROJECT_DIR = project_dirnode
 
 """ Build artifact nodes """
-VARIANT_DIR = REPO_ROOT_DIR.Dir("_build_{}".format(PROJECT_DIR.name))
+VARIANT_DIR = Dir("#/_build_{}".format(PROJECT_DIR.name))
 OBJ_DIR = VARIANT_DIR.Dir("obj")
 MAP_FILE = VARIANT_DIR.File("{}.map".format(PROJECT_DIR.name))
 SIZE_FILE = VARIANT_DIR.File("{}.size".format(PROJECT_DIR.name))
 UNIT_TEST_BUILD_DIR = VARIANT_DIR.Dir("test")
-MOCK_DIR = project_dirnode.Dir("mock")
+MOCK_DIR = project_dirnode.Dir("unittest_header_overrides")
 
 """ Source and include nodes """
 INCLUDE_DIRS = []
@@ -49,6 +48,10 @@ LINKER_FILES = [
 
 EXCLUDED_SRC_FILES = []
 
+EXCLUDED_INCLUDE_DIRNAMES = [
+    MOCK_DIR.name,
+    "test",
+]
 
 """
 Import build environment
@@ -71,7 +74,7 @@ all_sources = Sources()
 
 """ Search and group source files and source directories """
 for dir in SRC_DIRS_ROOT:
-    sources = fsops.scan_tree(dir)
+    sources = fsops.scan_tree(dir, ignore_dirnames=EXCLUDED_INCLUDE_DIRNAMES)
     all_sources += sources
 
 """ Group linker scripts """
@@ -80,8 +83,8 @@ for linker_file in LINKER_FILES:
 
 """ Search and group include paths """
 for dir in INCLUDE_DIRS_ROOT:
-    sources = fsops.scan_tree(dir)
-    all_sources += sources
+    sources = fsops.scan_tree(dir, ignore_dirnames=EXCLUDED_INCLUDE_DIRNAMES)
+    all_sources.include_dirnodes += sources.include_dirnodes
 env_arm["CPPPATH"].extend(INCLUDE_DIRS)
 env_arm["CPPPATH"].extend(all_sources.include_dirnodes)
 
