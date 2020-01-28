@@ -30,6 +30,7 @@ OBJ_DIR = VARIANT_DIR.Dir("obj")
 MAP_FILE = VARIANT_DIR.File("{}.map".format(PROJECT_DIR.name))
 SIZE_FILE = VARIANT_DIR.File("{}.size".format(PROJECT_DIR.name))
 UNIT_TEST_BUILD_DIR = VARIANT_DIR.Dir("test")
+MOCK_DIR = project_dirnode.Dir("mock")
 
 """ Source and include nodes """
 INCLUDE_DIRS = []
@@ -139,5 +140,11 @@ Unit test
 if not no_unit_test:
     env_x86 = env.register_environment("env_x86")
     env_x86.Append(CPPPATH=env_arm["CPPPATH"])
-    unit_test_results = env_x86.Test(source=PROJECT_DIR, target=UNIT_TEST_BUILD_DIR, sources=all_sources, verbose=verbose)
+    unit_test_results = env_x86.Test(
+        source=PROJECT_DIR,
+        target=UNIT_TEST_BUILD_DIR,
+        sources=all_sources,
+        prepend_include_dirnodes=MOCK_DIR,
+        verbose=verbose,
+    )
     Requires(obj_filenodes, unit_test_results)

@@ -63,11 +63,13 @@ def exists():
 Environment functions
 """
 
-def unittest_method(env, source, target, sources=None, verbose=False):
+def unittest_method(env, source, target, sources=None, prepend_include_dirnodes=None, verbose=False):
     all_exe_filenodes = []
-    results = []
     dependent_srcpath_objpath_map = {}
     env_ut = get_unittest_env(env)
+
+    if prepend_include_dirnodes is not None:
+        env_ut.Prepend(CPPPATH=prepend_include_dirnodes)
 
     unittest_obj_filenodes = []
     for source_filenode in SOURCE_FILES:
