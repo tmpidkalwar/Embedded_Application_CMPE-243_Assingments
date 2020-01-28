@@ -58,7 +58,7 @@ static void create_uart_task(void) {
 }
 
 static void blink_task(void *params) {
-  const gpio_s led = *((gpio_s *)params);
+  const gpio_s led = *((gpio_s *)params); // Parameter was input while calling xTaskCreate()
 
   // Warning: This task starts with very minimal stack, so do not use printf() API here to avoid stack overflow
   while (true) {
@@ -81,6 +81,8 @@ static void uart_task(void *params) {
      *
      * Use this style print for:
      *  - Interrupts because you cannot use printf() inside an ISR
+     *    This is because regular printf() leads down to xQueueSend() that might block
+     *    but you cannot block inside an ISR hence the system might crash
      *  - During debugging in case system crashes before all output of printf() is sent
      */
     ticks = xTaskGetTickCount();

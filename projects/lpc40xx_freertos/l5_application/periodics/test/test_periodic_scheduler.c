@@ -5,12 +5,22 @@
 
 void NVIC_SystemReset(void) {}
 
-// Include the source we wish to test
-// We #include the *.c source file in this case if we wish to access the "internal" as in "static" members
-#include "periodic_scheduler.c"
-
+/**
+ * Generate "Mocks" for these files
+ */
 #include "Mockperiodic_callbacks.h"
 #include "Mocktask.h"
+
+/**
+ * Include the source we wish to test
+ * There are two options:
+ *   1. Include 'periodic_scheduler.h'
+ *      In this case, we can test the API as a black box, but not get into the details (or static functions)
+ *   2. Include 'periodic_scheduler.c'
+ *      In this case, our test file here can see all of the internals of the file as the whole *.c
+ *      file is sort of "inlined" right above our source code here
+ */
+#include "periodic_scheduler.c"
 
 void setUp(void) {}
 
