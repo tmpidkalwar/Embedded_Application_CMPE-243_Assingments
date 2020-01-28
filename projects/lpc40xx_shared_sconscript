@@ -116,6 +116,8 @@ Depends(elf_filenodes, LINKER_FILES)
 """
 Automatically format all files
 """
+format_sources = fsops.scan_tree(PROJECT_DIR, ignore_dirnames=None)
+
 FORMAT_EXCLUDED_FILES = [
     PROJECT_DIR.File("lpc40xx.h"),
 ]
@@ -127,7 +129,7 @@ FORMAT_EXCLUDED_DIRS = [
 ]
 
 format_filenodes = fsops.filter_files(
-    filenodes=(all_sources.source_filenodes + all_sources.include_filenodes),
+    filenodes=(format_sources.source_filenodes + format_sources.include_filenodes),
     exclude_filenodes=FORMAT_EXCLUDED_FILES,
     exclude_dirnodes=FORMAT_EXCLUDED_DIRS,
 )

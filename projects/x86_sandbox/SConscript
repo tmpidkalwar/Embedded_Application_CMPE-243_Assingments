@@ -72,7 +72,9 @@ for filenode in all_sources.source_filenodes + all_sources.assembly_filenodes:
 exe_filenodes = env_x86.Program(target=VARIANT_DIR.File("{}.exe".format(PROJECT_DIR.name)), source=obj_filenodes)
 
 if not no_format:
-    for filenode in all_sources.source_filenodes:
+    format_sources = fsops.scan_tree(project_dirnode, ignore_dirnames=None)
+
+    for filenode in format_sources.source_filenodes + format_sources.include_filenodes:
         env_x86.ClangFormat(filenode=filenode, verbose=verbose)
 
 if not no_unit_test:
