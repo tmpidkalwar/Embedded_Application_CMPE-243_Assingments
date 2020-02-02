@@ -8,7 +8,7 @@ from nxpprog import NXPPROG_PY
 
 SELF_DIRPATH = os.path.dirname(__file__)
 REPO_ROOT_DIRPATH = os.path.join(SELF_DIRPATH, "..")
-DEFAULT_BIN_FILEPATH = os.path.join(REPO_ROOT_DIRPATH, "_build", "sjtwo-c.bin")
+DEFAULT_BIN_FILEPATH = os.path.join(REPO_ROOT_DIRPATH, "_build_lpc40xx_freertos", "lpc40xx_freertos.bin")
 
 FAILURE = r"""
 _____ _    ___ _    _   _ ____  _____
@@ -36,12 +36,14 @@ def get_args():
         help="File path of firmware (.bin) to flash onto target",
         default=None,
     )
+
+    # --device left here for backward compatibility, use -p or --port
     arg_parser.add_argument(
-        "-d", "--device",
+        "-p", "-d", "--port", "--device",
         metavar="<STRING or FILE>",
         type=str,
         help="USB to Serial device ID (i.e. COM6 or /dev/ttyUSB0)",
-        required=True,
+        default="",
     )
     arg_parser.add_argument(
         "-v", "--verbose",
@@ -69,10 +71,13 @@ def get_args():
 def main():
     args = get_args()
     input_filepath = os.path.abspath(args.input)
-    device_id = args.device
+    device_id = args.port
     verbose = args.verbose
 
-    print("Flashing file [{}] using device ID [{}]".format(input_filepath, device_id))
+    if device_id:
+        print("Flashing file [{}] using device ID [{}]".format(input_filepath, device_id))
+    else:
+        print("Flashing file [{}] using automatic port selection".format(input_filepath))
     sys.stdout.flush()
 
     cmd = [
