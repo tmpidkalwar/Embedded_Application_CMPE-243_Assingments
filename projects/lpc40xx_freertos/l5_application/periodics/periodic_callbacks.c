@@ -2,10 +2,13 @@
 
 #include "board_io.h"
 #include "gpio.h"
+<<<<<<< HEAD
 #include "switch_led_logic.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
+=======
+>>>>>>> 13cfd2a20ca464b82cc0312de6e16b11f6beb15f
 
 /******************************************************************************
  * Your board will reset if the periodic function does not return within its deadline
@@ -14,18 +17,24 @@
  */
 void periodic_callbacks__initialize(void) {
   // This method is invoked once when the periodic tasks are created
+<<<<<<< HEAD
   switch_led_logic__initialize();
+=======
+>>>>>>> 13cfd2a20ca464b82cc0312de6e16b11f6beb15f
 }
 
 void periodic_callbacks__1Hz(uint32_t callback_count) {
   gpio__toggle(board_io__get_led0());
   // Add your code here
+<<<<<<< HEAD
   switch_led_logic__run_once();
 
   // Testing timeout, use scons --no-unit-test
   /*if (callback_count >= 5) {
     vTaskDelay(1000);
   }*/
+=======
+>>>>>>> 13cfd2a20ca464b82cc0312de6e16b11f6beb15f
 }
 
 void periodic_callbacks__10Hz(uint32_t callback_count) {

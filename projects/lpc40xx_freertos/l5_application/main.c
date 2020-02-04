@@ -29,7 +29,11 @@ static void create_blinky_tasks(void) {
    * Use '#if (1)' if you wish to observe how two tasks can blink LEDs
    * Use '#if (0)' if you wish to use the 'periodic_scheduler.h' that will spawn 4 periodic tasks, one for each LED
    */
+<<<<<<< HEAD
 #if (0)
+=======
+#if (1)
+>>>>>>> 13cfd2a20ca464b82cc0312de6e16b11f6beb15f
   // These variables should not go out of scope because the 'blink_task' will reference this memory
   static gpio_s led0, led1;
 
