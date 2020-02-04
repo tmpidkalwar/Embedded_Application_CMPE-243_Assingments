@@ -24,7 +24,7 @@ void periodic_callbacks__1Hz(uint32_t callback_count) {
   switch_led_logic__run_once();
 
   // Demonstrate software watchdog reset
-#if (0)
+#if (1)
   if (callback_count >= 5) {
     vTaskDelay(1000);
   }
