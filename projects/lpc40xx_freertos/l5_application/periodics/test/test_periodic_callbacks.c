@@ -10,6 +10,7 @@
 #include "Mockgpio.h"
 
 #include "Mockswitch_led_logic.h"
+#include "Mocktask.h"
 
 // Include the source we wish to test
 #include "periodic_callbacks.h"
@@ -28,6 +29,6 @@ void test__periodic_callbacks__1Hz(void) {
   board_io__get_led0_ExpectAndReturn(gpio);
   gpio__toggle_Expect(gpio);
 
-  switch_led_logic__run_once();
+  switch_led_logic__run_once_Expect();
   periodic_callbacks__1Hz(0);
 }
