@@ -15,8 +15,7 @@ void periodic_callbacks__initialize(void) {
 void periodic_callbacks__1Hz(uint32_t callback_count) {
   gpio__toggle(board_io__get_led0());
   // Add your code here
-  while (callback_count != 10) {
-  }
+  //while (callback_count != 10) {}
 }
 
 void periodic_callbacks__10Hz(uint32_t callback_count) {
