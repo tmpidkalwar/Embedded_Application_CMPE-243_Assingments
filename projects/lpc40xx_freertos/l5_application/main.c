@@ -29,7 +29,7 @@ static void create_blinky_tasks(void) {
    * Use '#if (1)' if you wish to observe how two tasks can blink LEDs
    * Use '#if (0)' if you wish to use the 'periodic_scheduler.h' that will spawn 4 periodic tasks, one for each LED
    */
-#if (1)
+#if (0)
   // These variables should not go out of scope because the 'blink_task' will reference this memory
   static gpio_s led0, led1;
 
@@ -48,7 +48,7 @@ static void create_blinky_tasks(void) {
 static void create_uart_task(void) {
   // It is advised to either run the uart_task, or the SJ2 command-line (CLI), but not both
   // Change '#if (0)' to '#if (1)' and vice versa to try it out
-#if (0)
+#if (1)
   // printf() takes more stack space, size this tasks' stack higher
   xTaskCreate(uart_task, "uart", (512U * 8) / sizeof(void *), NULL, PRIORITY_LOW, NULL);
 #else

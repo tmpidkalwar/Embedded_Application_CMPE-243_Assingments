@@ -1,4 +1,6 @@
 **/*.pyc
 **/.DS_Store
 .sconsign.dblite
+hercules_3-2-8.exe
 _build_*/*
+
