@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "switch_led_logic.h": "c",
+        "periodic_callbacks.h": "c"
+    }
+}
