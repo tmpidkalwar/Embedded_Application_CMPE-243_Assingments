@@ -1,8 +1,8 @@
 #include "switch_led_logic.h"
 
 void switch_led_logic__initialize() {
-  my_led = gpio__construct_as_output(GPIO__PORT_2, 0);
-  my_switch = gpio__construct_as_input(GPIO__PORT_2, 1);
+  my_led = gpio__construct_as_output(GPIO__PORT_1, 18);
+  my_switch = gpio__construct_as_input(GPIO__PORT_0, 29);
 }
 
 void switch_led_logic__run_once() {

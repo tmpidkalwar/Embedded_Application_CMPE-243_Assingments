@@ -1,3 +1,4 @@
+#include "board_io.h"
 #include "gpio.h"
 
 static gpio_s my_led;
