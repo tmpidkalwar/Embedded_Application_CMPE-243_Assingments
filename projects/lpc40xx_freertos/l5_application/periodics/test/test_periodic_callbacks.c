@@ -22,8 +22,9 @@ void test__periodic_callbacks__initialize(void) {
   periodic_callbacks__initialize();
 }
 
+gpio_s gpio = {};
+
 void test__periodic_callbacks__1Hz(void) {
-  // gpio_s gpio = {};
   // board_io__get_led0_ExpectAndReturn(gpio);
   // gpio__toggle_Expect(gpio);
 
@@ -32,7 +33,6 @@ void test__periodic_callbacks__1Hz(void) {
 }
 
 void test__periodic_callbacks__10Hz(void) {
-  gpio_s gpio = {};
   board_io__get_led1_ExpectAndReturn(gpio);
   gpio__toggle_Expect(gpio);
 
@@ -40,7 +40,6 @@ void test__periodic_callbacks__10Hz(void) {
 }
 
 void test__periodic_callbacks__100Hz(void) {
-  gpio_s gpio = {};
   board_io__get_led2_ExpectAndReturn(gpio);
   gpio__toggle_Expect(gpio);
 
@@ -48,7 +47,6 @@ void test__periodic_callbacks__100Hz(void) {
 }
 
 void test__periodic_callbacks__1000Hz(void) {
-  gpio_s gpio = {};
   board_io__get_led3_ExpectAndReturn(gpio);
   gpio__toggle_Expect(gpio);
 
