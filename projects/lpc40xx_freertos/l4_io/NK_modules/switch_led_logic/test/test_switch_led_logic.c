@@ -14,11 +14,11 @@ void setUp(void) {}
 
 void tearDown(void) {}
 
-gpio_s led, sw, extra_arg;
+gpio_s led, sw;
 
 void test__switch_led_logic__initialize() {
-  gpio__construct_as_output_ExpectAndReturn(GPIO__PORT_1, 18, extra_arg);
-  gpio__construct_as_input_ExpectAndReturn(GPIO__PORT_0, 29, extra_arg);
+  gpio__construct_as_output_ExpectAndReturn(GPIO__PORT_1, 18, led);
+  gpio__construct_as_input_ExpectAndReturn(GPIO__PORT_0, 29, sw);
   switch_led_logic__initialize();
 }
 
