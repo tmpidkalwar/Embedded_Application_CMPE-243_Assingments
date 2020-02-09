@@ -1,7 +1,7 @@
 #include "periodic_callbacks.h"
-
 #include "board_io.h"
 #include "gpio.h"
+#include "switch_led_logic.h"
 
 /******************************************************************************
  * Your board will reset if the periodic function does not return within its deadline
@@ -9,11 +9,13 @@
  * For 1000Hz, the function must return within 1ms
  */
 void periodic_callbacks__initialize(void) {
+  switch_led_logic__initialize();
   // This method is invoked once when the periodic tasks are created
 }
 
 void periodic_callbacks__1Hz(uint32_t callback_count) {
   gpio__toggle(board_io__get_led0());
+  switch_led_logic__run_once();
   // Add your code here
 }
 
