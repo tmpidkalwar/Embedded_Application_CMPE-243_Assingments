@@ -13,7 +13,7 @@ void switch_led_logic__initialize() {
 }
 
 void switch_led_logic__run_once() {
-  if (!gpio__get(switch0)) {
+  if (gpio__get(switch0)) {
     gpio__set(led0);
   } else {
     gpio__reset(led0);
