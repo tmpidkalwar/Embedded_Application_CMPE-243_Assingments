@@ -10,11 +10,13 @@
  */
 void periodic_callbacks__initialize(void) {
   // This method is invoked once when the periodic tasks are created
+  switch_led_logic__initialize();
 }
 
 void periodic_callbacks__1Hz(uint32_t callback_count) {
   gpio__toggle(board_io__get_led0());
   // Add your code here
+  switch_led_logic__run_once();
 }
 
 void periodic_callbacks__10Hz(uint32_t callback_count) {
