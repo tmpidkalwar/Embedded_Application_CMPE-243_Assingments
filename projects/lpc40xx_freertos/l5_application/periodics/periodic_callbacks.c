@@ -1,3 +1,4 @@
+#pragma once
 #include "periodic_callbacks.h"
 
 #include "board_io.h"
