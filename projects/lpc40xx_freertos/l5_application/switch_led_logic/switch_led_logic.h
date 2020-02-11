@@ -1,5 +1,5 @@
-#pragma once
 #include "FreeRTOS.h"
+
 #include "board_io.h"
 #include "gpio.h"
 #include "task.h"

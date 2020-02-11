@@ -1,8 +1,7 @@
+#include "Mocktask.h"
+#include "unity.h"
 #include <stdio.h>
 #include <string.h>
-
-#include "unity.h"
-
 // Include the Mocks
 // - This will not pull the REAL source code of these modules (such as board_io.c)
 // - This will auto-generate "Mock" versions based on the header file
