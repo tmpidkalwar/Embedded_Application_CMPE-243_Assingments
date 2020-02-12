@@ -13,6 +13,8 @@
 // Include the source we wish to test
 #include "periodic_callbacks.h"
 
+static gpio_s gpio = {};
+
 void setUp(void) {}
 
 void tearDown(void) {}
@@ -21,8 +23,6 @@ void test__periodic_callbacks__initialize(void) {
   switch_led_logic__initialize_Expect();
   periodic_callbacks__initialize();
 }
-
-gpio_s gpio = {};
 
 void test__periodic_callbacks__1Hz(void) {
   // board_io__get_led0_ExpectAndReturn(gpio);
