@@ -23,12 +23,21 @@ void test__switch_led_logic__initialize() {
 }
 
 void test__switch_led_logic__run_once() {
-  bool sw_val;
+  bool sw_val = true;
   gpio__get_ExpectAndReturn(sw, sw_val);
 
   if (sw_val) {
     gpio__set_Expect(led);
-  } else {
+  }
+
+  switch_led_logic__run_once();
+}
+
+void test__switch_led_logic__run_once2() {
+  bool sw_val = false;
+  gpio__get_ExpectAndReturn(sw, sw_val);
+
+  if (!sw_val) {
     gpio__reset_Expect(led);
   }
 
