@@ -9,10 +9,14 @@
 #include "periodic_scheduler.h"
 #include "sj2_cli.h"
 
+#define BLINKY 0
+#define UART 0
+
 static void create_blinky_tasks(void);
 static void create_uart_task(void);
 static void blink_task(void *params);
 static void uart_task(void *params);
+static void switch_task(void *params);
 
 int main(void) {
   create_blinky_tasks();
@@ -29,26 +33,32 @@ static void create_blinky_tasks(void) {
    * Use '#if (1)' if you wish to observe how two tasks can blink LEDs
    * Use '#if (0)' if you wish to use the 'periodic_scheduler.h' that will spawn 4 periodic tasks, one for each LED
    */
-#if (1)
+#if (BLINKY)
   // These variables should not go out of scope because the 'blink_task' will reference this memory
-  static gpio_s led0, led1;
+  static gpio_s led[4];
 
-  led0 = board_io__get_led0();
-  led1 = board_io__get_led1();
+  led[0] = board_io__get_led0();
+  led[1] = board_io__get_led1();
+  led[2] = board_io__get_led2();
+  led[3] = board_io__get_led3();
 
-  xTaskCreate(blink_task, "led0", configMINIMAL_STACK_SIZE, (void *)&led0, PRIORITY_LOW, NULL);
-  xTaskCreate(blink_task, "led1", configMINIMAL_STACK_SIZE, (void *)&led1, PRIORITY_LOW, NULL);
+  for (int i = 0; i < 4; i++) {
+    xTaskCreate(blink_task, "led", configMINIMAL_STACK_SIZE, (void *)&led[i], PRIORITY_LOW, NULL);
+  }
+  xTaskCreate(switch_task, "Blinking led1 using Switch Board", configMINIMAL_STACK_SIZE, (void *)&led[1], PRIORITY_LOW,
+              NULL);
 #else
-  const size_t stack_size_bytes = 2048 / sizeof(void *);
+  const size_t stack_size_bytes = (2048 * 3) / sizeof(void *);
   periodic_scheduler__initialize(stack_size_bytes);
   UNUSED(blink_task);
+  UNUSED(switch_task);
 #endif
 }
 
 static void create_uart_task(void) {
   // It is advised to either run the uart_task, or the SJ2 command-line (CLI), but not both
   // Change '#if (0)' to '#if (1)' and vice versa to try it out
-#if (0)
+#if (UART)
   // printf() takes more stack space, size this tasks' stack higher
   xTaskCreate(uart_task, "uart", (512U * 8) / sizeof(void *), NULL, PRIORITY_LOW, NULL);
 #else
@@ -63,6 +73,22 @@ static void blink_task(void *params) {
   // Warning: This task starts with very minimal stack, so do not use printf() API here to avoid stack overflow
   while (true) {
     gpio__toggle(led);
+    vTaskDelay(500);
+  }
+}
+
+static void switch_task(void *params) {
+  const gpio_s led = *((gpio_s *)params); // Parameter was input while calling xTaskCreate()
+  gpio_s switch_button_gpio;
+  switch_button_gpio = gpio__construct_as_input(GPIO__PORT_0, 30);
+
+  // Warning: This task starts with very minimal stack, so do not use printf() API here to avoid stack overflow
+  while (true) {
+    if (gpio__get(switch_button_gpio)) {
+      gpio__set(led);
+    } else {
+      gpio__reset(led);
+    }
     vTaskDelay(500);
   }
 }
