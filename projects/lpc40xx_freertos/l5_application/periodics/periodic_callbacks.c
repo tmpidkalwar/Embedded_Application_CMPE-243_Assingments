@@ -21,9 +21,9 @@ void periodic_callbacks__1Hz(uint32_t callback_count) {
 
 void periodic_callbacks__10Hz(uint32_t callback_count) {
   gpio__reset(board_io__get_led0());
- /*  if (callback_count > 5) {
-    vTaskDelay(1000);
-  } */
+  /*  if (callback_count > 5) {
+     vTaskDelay(1000);
+   } */
 }
 void periodic_callbacks__100Hz(uint32_t callback_count) { gpio__reset(board_io__get_led2()); }
 

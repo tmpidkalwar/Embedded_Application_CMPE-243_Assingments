@@ -36,9 +36,9 @@ void test__periodic_callbacks__10Hz(void) {
   board_io__get_led0_ExpectAndReturn(gpio);
   gpio__reset_Expect(gpio);
   uint32_t callback_count;
-/*   if (callback_count > 5) {
-    vTaskDelay_Expect(1000);
-  } */
+  /*   if (callback_count > 5) {
+      vTaskDelay_Expect(1000);
+    } */
   periodic_callbacks__10Hz(10);
 }
 

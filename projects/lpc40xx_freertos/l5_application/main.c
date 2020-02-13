@@ -43,14 +43,12 @@ static void create_blinky_tasks(void) {
   led[3] = board_io__get_led3();
 
   for (int i = 0; i < 4; i++) {
-    if (i == 1)
-      continue;
     xTaskCreate(blink_task, "led", configMINIMAL_STACK_SIZE, (void *)&led[i], PRIORITY_LOW, NULL);
   }
   xTaskCreate(switch_task, "Blinking led1 using Switch Board", configMINIMAL_STACK_SIZE, (void *)&led[1], PRIORITY_LOW,
               NULL);
 #else
-  const size_t stack_size_bytes = 2048 / sizeof(void *);
+  const size_t stack_size_bytes = (2048 * 3) / sizeof(void *);
   periodic_scheduler__initialize(stack_size_bytes);
   UNUSED(blink_task);
   UNUSED(switch_task);
