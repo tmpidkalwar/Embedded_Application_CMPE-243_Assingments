@@ -49,3 +49,4 @@ Originally, Preet created "SJ1" development board, which meant that there was on
 This is where the *SJ2-C* was born, which was completely re-designed to write simple code that everyone could understand. Many students are new to programming and it was not expected that C++ would come naturally. The code may appear less fancy, but it is simple to understand and traceable with minimal abstractions. The goal is to avoid designing yet another Arduino platform. There is no such thing as magic in the field of firmware engineering.
 
 ----# CMPE243_HW3
+# CMPE243_HW3
