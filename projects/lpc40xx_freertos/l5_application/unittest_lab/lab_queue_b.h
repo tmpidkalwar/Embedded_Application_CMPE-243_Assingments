@@ -1,0 +1,29 @@
+#pragma once
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+/* In this code lab, the queue memory is statically defined
+ * by the user and provided to you upon queue__init()
+ */
+typedef struct {
+  void *static_memory_for_queue;
+  size_t static_memory_size_in_bytes;
+
+  // TODO: Add more members as needed
+  int count;
+} queue_s;
+
+/* Initialize the queue with user provided static memory
+ * @param static_memory_for_queue This memory pointer should not go out of scope
+ */
+void queue__init_b(queue_s *queue, void *static_memory_for_queue, size_t static_memory_size_in_bytes);
+
+/// @returns false if the queue is full
+bool queue__push_b(queue_s *queue, uint8_t push_value);
+
+/// @returns false if the queue was empty
+bool queue__pop_b(queue_s *queue, uint8_t *pop_value);
+
+size_t queue__get_item_count_b(const queue_s *queue);

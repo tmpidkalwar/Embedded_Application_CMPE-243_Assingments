@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "lpc40xx.h": "c",
+        "mockboard_io.h": "c"
+    }
+}
