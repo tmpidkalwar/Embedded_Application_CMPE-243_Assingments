@@ -66,7 +66,10 @@ def exists():
 Environment functions
 """
 
-def unittest_method(env, source, target, sources=None, prepend_include_dirnodes=None, verbose=False):
+def unittest_method(env, source, target, sources=None, prepend_include_dirnodes=None, summary_only=False, verbose=False):
+    if verbose:
+        summary_only = False
+
     all_exe_filenodes = []
     dependent_srcpath_objpath_map = {}
     env_ut = get_unittest_env(env)
@@ -115,7 +118,7 @@ def unittest_method(env, source, target, sources=None, prepend_include_dirnodes=
         exe_filenodes = env_ut.Program(target=fsops.ch_target_filenode(filenode_ut, output_dirnode, "exe"), source=obj_filenodes)
         all_exe_filenodes += exe_filenodes
 
-    result = execute_unit_tests(env_ut, all_exe_filenodes)
+    result = execute_unit_tests(env_ut, all_exe_filenodes, summary_only=summary_only)
 
     return result
 
@@ -187,8 +190,8 @@ def find_dependencies_from_sources(filenode, sources, header_filenodes_override=
                     break
             else:
                 missing_dependency_filenames.append(filename)
-        else:
-            mock_header_filename = filename.lstrip(MOCK_HEADER_PREFIX)
+        else:  # filename.startswith(MOCK_HEADER_PREFIX)
+            mock_header_filename = filename.replace(MOCK_HEADER_PREFIX, "", 1)
             if header_filenodes_override is None:
                 header_filenodes_override = []
             for header_filenode in header_filenodes_override + sources.include_filenodes:
@@ -222,13 +225,15 @@ def generate_mocks(env, header_filenodes, target_dirnode):
     return mock_header_filenodes, mock_source_filenodes
 
 
-def execute_unit_tests(env, exe_filenodes):
+def execute_unit_tests(env, exe_filenodes, summary_only=False):
     # Example:
     # python <UNIT_TEST_RUNNER_PY> -i <exe> -i <exe> -i <exe>
     command = [
         "python",
         UNIT_TEST_RUNNER_PY.abspath,
     ]
+    if summary_only:
+        command.append("--summary-only")
     command.extend(map(lambda filenode: "-i {}".format(filenode.abspath), exe_filenodes))
 
     result = env.Command(target=None, source=exe_filenodes, action=" ".join(command))
