@@ -17,9 +17,9 @@ void vPortSVCHandler( void );
  * can measure the time interrupts are using, while subtracting the runtime from the tasks simultaneously
  */
 static void invoke_function_in_wrapper(function__void_f function) {
-  vRunTimeStatIsrEntry();
+  // vRunTimeStatIsrEntry();
   function();
-  vRunTimeStatIsrExit();
+  // vRunTimeStatIsrExit();
 }
 
 /**
