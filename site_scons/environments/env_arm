@@ -55,9 +55,6 @@ COMMON_FLAGS = [
     #"-mfpu=auto",
     "-mfpu=fpv4-sp-d16",
     "-mfloat-abi=hard",
-    "-fabi-version=0",
-    "-mtpcs-frame",
-    "-mtpcs-leaf-frame",
     "-Wall",
     "-Wshadow",
     # Float warnings
