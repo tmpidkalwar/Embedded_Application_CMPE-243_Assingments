@@ -34,13 +34,18 @@ class code_writer:
 #include <stdlib.h>
 '''.format(dbc_filename))
 
-    def mia_struct(self):
+    def common_structs(self):
         self._stream.write('''
 /// Missing in Action (MIA) structure
 typedef struct {
   uint32_t is_mia : 1;          ///< Missing in action flag
   uint32_t mia_counter_ms : 31; ///< Missing in action counter
 } dbc_mia_info_t;
+
+typedef struct {
+  uint32_t message_id;
+  uint8_t message_dlc;          ///< Data length code of the CAN message
+} dbc_message_header_t;
 ''')
 
     def structs(self, messages, generate_layout=False):
@@ -57,6 +62,26 @@ typedef struct {{
 {3}}} dbc_{4}_s;
 '''.format(message.name, message.senders[0], message_layout, signal_members, message.name))
 
+    def encode_methods(self, messages):
+        for message in messages:
+            self._stream.write('''
+/**
+ * {0}: Sent by {1}
+ */
+dbc_message_header_t dbc_encode_{2}(uint8_t bytes[8], const dbc_{3}_s *message) {{
+}}
+'''.format(message.name, message.senders[0], message.name, message.name))
+
+    def decode_methods(self, messages):
+        for message in messages:
+            self._stream.write('''
+/**
+ * {0}: Sent by {1}
+ */
+bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {{
+}}
+'''.format(message.name, message.senders[0], message.name, message.name))
+
     # https://cantools.readthedocs.io/en/latest/#cantools.database.can.Signal
     def _gen_struct_signals(self, message):
         signals_string = ""
@@ -66,11 +91,13 @@ typedef struct {{
                 type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name).ljust(40)
                 signals_string += "  {0}; // Scale={1}\n".format(type_and_name, signal.scale)
         else:
+            # For a muxed message, first generate non-mux symbols (which includes the mux itself)
             for signal in message.signals:
                 if signal.multiplexer_ids is None:
                     type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name).ljust(40)
                     signals_string += "  {0}; // Non-muxed symbol\n".format(type_and_name)
 
+            # Create a dictionary of a list where the key is the mux symbol
             muxed_signals = defaultdict(list)
             for signal in message.signals:
                 if signal.multiplexer_ids is not None:
@@ -118,8 +145,10 @@ def main():
     dbc = cantools.database.load_file(dbc_filepath)
     cw = code_writer(sys.stdout)
     cw.file_header(dbc_filepath)
-    #cw.mia_struct()
+    cw.common_structs()
     cw.structs(dbc.messages)
+    cw.encode_methods(dbc.messages)
+    cw.decode_methods(dbc.messages)
 
 
 if __name__ == "__main__":
