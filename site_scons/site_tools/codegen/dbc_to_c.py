@@ -1,4 +1,6 @@
 from argparse import ArgumentParser
+from collections import defaultdict
+
 import os
 import sys
 
@@ -52,15 +54,34 @@ typedef struct {
  * {0}: Sent by {1} {2}
  */
 typedef struct {{
-{3}
-}} dbc_{4}_s;
+{3}}} dbc_{4}_s;
 '''.format(message.name, message.senders[0], message_layout, signal_members, message.name))
 
+    # https://cantools.readthedocs.io/en/latest/#cantools.database.can.Signal
     def _gen_struct_signals(self, message):
         signals_string = ""
-        for signal in message.signals:
-            type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name).ljust(40)
-            signals_string += "  {0}; // Scale={1}\n".format(type_and_name, signal.scale)
+
+        if not message.is_multiplexed():
+            for signal in message.signals:
+                type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name).ljust(40)
+                signals_string += "  {0}; // Scale={1}\n".format(type_and_name, signal.scale)
+        else:
+            for signal in message.signals:
+                if signal.multiplexer_ids is None:
+                    type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name).ljust(40)
+                    signals_string += "  {0}; // Non-muxed symbol\n".format(type_and_name)
+
+            muxed_signals = defaultdict(list)
+            for signal in message.signals:
+                if signal.multiplexer_ids is not None:
+                    muxed_signals[signal.multiplexer_ids[0]].append(signal)
+
+            for mux_id in muxed_signals:
+                signals_string += '\n'
+                for signal in muxed_signals[mux_id]:
+                    type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name).ljust(40)
+                    signals_string += "  {0}; // M{1}, Scale={2}\n".format(type_and_name, mux_id, signal.scale)
+
 
         return signals_string
 
@@ -92,18 +113,13 @@ def main():
 
     if not os.path.isfile(dbc_filepath):
         print("Unable to find DBC file: [{}]".format(dbc_filepath))
+        exit(-1)
 
     dbc = cantools.database.load_file(dbc_filepath)
     cw = code_writer(sys.stdout)
     cw.file_header(dbc_filepath)
     #cw.mia_struct()
     cw.structs(dbc.messages)
-    return
-
-    for message in dbc.messages:
-        print(message)  #
-        for signal in message.signals:
-            print(signal)  # https://cantools.readthedocs.io/en/latest/#cantools.database.can.Signal
 
 
 if __name__ == "__main__":
