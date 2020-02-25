@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "line_buffer.h": "c",
+        "unity.h": "c",
+        "string.h": "c"
+    }
+}

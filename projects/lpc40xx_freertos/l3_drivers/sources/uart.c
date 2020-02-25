@@ -5,6 +5,7 @@
 
 #include "lpc40xx.h"
 #include "lpc_peripherals.h"
+#include <stdio.h>
 
 /// Alias the LPC defined typedef in case we have to define it differently for a different CPU
 typedef LPC_UART_TypeDef lpc_uart;
@@ -170,6 +171,9 @@ static void uart__isr_common(uart_s *uart_type) {
 void uart__init(uart_e uart, uint32_t peripheral_clock, uint32_t baud_rate) {
   lpc_peripheral__turn_on_power_to(uart_peripheral_ids[uart]);
 
+  // uart_e temp = uart;
+  // printf("UART : %d", (int)temp);
+
   const float roundup_offset = 0.5;
   const uint16_t divider = (uint16_t)((peripheral_clock / (16 * baud_rate)) + roundup_offset);
   const uint8_t dlab_bit = (1 << 7);
@@ -204,6 +208,7 @@ bool uart__enable_queues(uart_e uart, QueueHandle_t queue_receive, QueueHandle_t
 
   // We can only access UART registers after its power has been enabled
   if (uart__is_initialized(uart)) {
+    printf("Entered\n");
     // Ensure that the queues are not already enabled
     if (!uart__is_receive_queue_enabled(uart) && NULL != queue_receive) {
       uart_type->queue_receive = queue_receive;
@@ -221,6 +226,8 @@ bool uart__enable_queues(uart_e uart, QueueHandle_t queue_receive, QueueHandle_t
       uart__enable_receive_and_transmit_interrupts(uart);
     }
   }
+
+  printf("Status %d\n", status);
 
   return status;
 }
@@ -240,6 +247,7 @@ bool uart__polled_get(uart_e uart, char *input_byte) {
      */
     if (rtos_is_running && queue_is_enabled) {
       status = uart__get(uart, input_byte, UINT32_MAX);
+      printf("If\n");
     } else {
       lpc_uart *uart_regs = uarts[uart].registers;
       const uint32_t char_available_bitmask = (1 << 0);
@@ -247,6 +255,7 @@ bool uart__polled_get(uart_e uart, char *input_byte) {
       while (!(uart_regs->LSR & char_available_bitmask)) {
       }
       *input_byte = uart_regs->RBR;
+      printf("Else\n");
     }
   }
 
@@ -278,6 +287,7 @@ bool uart__get(uart_e uart, char *input_byte, uint32_t timeout_ms) {
    * without an RTOS which increases the driver complexity.
    */
   if (uart__is_receive_queue_enabled(uart) && rtos_is_running) {
+    // printf("Entered get\n");
     status = xQueueReceive(uarts[uart].queue_receive, input_byte, RTOS_MS_TO_TICKS(timeout_ms));
   }
 
