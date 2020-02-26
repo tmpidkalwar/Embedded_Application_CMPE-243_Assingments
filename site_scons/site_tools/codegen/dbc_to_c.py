@@ -48,6 +48,13 @@ typedef struct {
 } dbc_message_header_t;
 ''')
 
+    def message_header_instances(self, messages):
+        self._stream.write('\n// Message headers containing CAN message IDs and their DLCs\n')
+        for message in messages:
+            self._stream.write('static const dbc_message_header_t dbc_header_{0}'.format(message.name).ljust(80))
+            self._stream.write(' = {{ {1}, {2} }};\n'.format(
+                message.name, str(message.frame_id).rjust(8), message.length))
+
     def structs(self, messages, generate_layout=False):
         # https://cantools.readthedocs.io/en/latest/#cantools.database.can.Message
         for message in messages:
@@ -72,39 +79,100 @@ typedef struct {{
  */
 static inline dbc_message_header_t dbc_encode_{4}(uint8_t bytes[8], const dbc_{5}_s *message) {{
 {6}
+  return dbc_header_{7};
 }}
-'''.format(message.name, message.senders[0], message.frame_id, message.length, message.name, message.name, self._get_encode_signals_code(message)))
+'''.format(message.name, message.senders[0], message.frame_id, message.length,
+           message.name, message.name, self._get_encode_signals_code(message), message.name))
 
     def decode_methods(self, messages):
         for message in messages:
+            validation_check = '''
+  if (header.message_id != dbc_header_{0}.message_id) {{
+    return !success;
+  }} else if (header.message_dlc != dbc_header_{1}.message_dlc) {{
+    return !success;
+  }} else {{
+    // DLC and message ID check is good
+  }}
+'''.format(message.name, message.name)
+
             self._stream.write('''
 /**
  * {0}: Sent by {1}
  */
 static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {{
   const bool success = true;
-
-  // TODO: Check DLC and message ID
-
 {4}
+{5}
 
   return success;
 }}
-'''.format(message.name, message.senders[0], message.name, message.name, self._get_decode_signals_code(message)))
+'''.format(message.name, message.senders[0], message.name, message.name, validation_check, self._get_decode_signals_code(message)))
 
     def _get_decode_signals_code(self, message):
-        code = ""
+        code = "  uint64_t raw = 0;\n"
 
-        if not message.is_multiplexed():
+        if message.is_multiplexed():
+            code += "  // Multiplexed signals are not handled yet\n"
+            code += "  (void)raw;\n"
+        else:
             for signal in message.signals:
-                code += "  // TODO " + signal.name
+                code += self._get_decode_signal_code(signal)
                 code += '\n'
 
         # Remove excessive newlines from the end
         return code.rstrip()
 
-    def _get_encode_signal_code(self, signal, raw_sig_name):
-        return ""
+    def _get_decode_signal_code(self, signal, raw_sig_name="raw"):
+        bit_pos = signal.start
+        remaining = signal.length
+        byte_num = int(signal.start / 8)
+        bit_count = 0
+        code = ''
+
+        while remaining > 0:
+            bits_in_this_byte = min(8 - (bit_pos % 8), remaining)
+
+            s = ""
+            s += "  {0} |= ((uint64_t)((bytes[{1}] >> {2})".format(raw_sig_name, byte_num, (bit_pos % 8))
+            s += " & 0x{0})) << {1}".format(format(2 ** bits_in_this_byte - 1, '02x'), bit_count)
+            s += "; // {0} bits from B{1}\n".format(bits_in_this_byte, bit_pos)
+
+            # Optimize
+            s = s.replace(" >> 0", "")
+            s = s.replace(" << 0", "")
+            s = s.replace(" & 0xff", "")
+
+            code += s
+            if bit_count == 0:
+                code = code.replace("|=", " =")
+
+            byte_num += 1
+            bit_pos += bits_in_this_byte
+            remaining -= bits_in_this_byte
+            bit_count += bits_in_this_byte
+
+        # If the signal is not defined as a signed, then we will use this code
+        unsigned_code = "message->{0} = (({1} * {2}) + ({3}));\n".format(signal.name, raw_sig_name, signal.scale, signal.offset)
+
+        if signal.is_signed:
+            mask = "(1 << {0})".format((signal.length - 1))
+            s = ""
+            s += "  if ({0} & {1}) {{ // Check signed bit\n".format(raw_sig_name, mask)
+            s += "    message->{0} = ".format(signal.name)
+            s += "(((((uint64_t)-1 << {0}) | {1}) * {2}) + ({3}));\n".format(str(signal.length - 1), raw_sig_name, str(signal.scale), signal.offset)
+            s += "  } else {\n"
+            s += "    " + unsigned_code
+            s += "  }\n"
+        else:
+            s = "  " + unsigned_code
+
+        # Optimize
+        s = s.replace(" + (0)", "")
+        s = s.replace(" * 1)", ")")
+        code += s
+
+        return code
 
     def _get_encode_signals_code(self, message):
         code = '''  uint64_t raw = 0;
@@ -148,7 +216,7 @@ static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t
             bits_in_this_byte = min(8 - (bit_pos % 8), remaining)
 
             s = ""
-            s += "  bytes[{0}] |= (((uint8_t)(raw_signal >> {1})".format(str(byte_num), str(bit_pos - signal.start).rjust(2))
+            s += "  bytes[{0}] |= (((uint8_t)({1} >> {2})".format(byte_num , raw_sig_name, str(bit_pos - signal.start).rjust(2))
             s += " & 0x{0}) << {1})".format(format(2 ** bits_in_this_byte - 1, '02x'), str(bit_pos % 8))
             s += "; // {0} bits at B{1}\n".format(str(bits_in_this_byte), str(bit_pos))
 
@@ -194,10 +262,7 @@ static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t
                     signals_string += "  {0}; // Non-muxed signal\n".format(type_and_name)
 
             # Create a dictionary of a list where the key is the mux symbol
-            muxed_signals = defaultdict(list)
-            for signal in message.signals:
-                if signal.multiplexer_ids is not None:
-                    muxed_signals[signal.multiplexer_ids[0]].append(signal)
+            muxed_signals = self._get_muxed_signals(message)
 
             for mux_id in muxed_signals:
                 signals_string += '\n'
@@ -207,6 +272,16 @@ static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t
 
 
         return signals_string
+
+    def _get_muxed_signals(self, message):
+        # Create a dictionary of a list where the key is the mux symbol
+        muxed_signals = defaultdict(list)
+
+        for signal in message.signals:
+            if signal.multiplexer_ids is not None:
+                muxed_signals[signal.multiplexer_ids[0]].append(signal)
+
+        return muxed_signals
 
     def _get_signal_type(self, signal):
         t = "float";
@@ -242,8 +317,9 @@ def main():
     cw = code_writer(sys.stdout)
     cw.file_header(dbc_filepath)
     cw.common_structs()
+    cw.message_header_instances(dbc.messages)
     cw.structs(dbc.messages)
-    #cw.encode_methods(dbc.messages)
+    cw.encode_methods(dbc.messages)
     cw.decode_methods(dbc.messages)
 
 
