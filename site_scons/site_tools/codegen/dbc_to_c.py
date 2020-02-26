@@ -8,6 +8,7 @@ sys.path.insert(0, "site_packages")
 
 import cantools
 
+enum_postfix = "_e"
 
 def get_args():
     arg_parser = ArgumentParser()
@@ -20,94 +21,115 @@ def get_args():
 
 
 class code_writer:
-    def __init__(self, stream):
+    def __init__(self, stream, dbc):
         self._stream = stream
+        self._dbc = dbc
+        self._messages = dbc.messages
 
     def file_header(self, dbc_filename):
-        self._stream.write('''
-// AUTO-GENERATED - DO NOT EDIT
-// Generated from {0}
-#pragma once
+        self._stream.write((
+                               "// clang-format off\n"
+                               "// AUTO-GENERATED - DO NOT EDIT\n"
+                               "// Generated from {0}\n"
+                               "#pragma once\n"
+                               "\n"
+                               "#include <stdbool.h>\n"
+                               "#include <stdint.h>\n"
+                               "#include <string.h>\n"
+                               "\n"
+                           ).format(dbc_filename))
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
-'''.format(dbc_filename))
+    def write_footer(self):
+        self._stream.write("\n"
+                           "// clang-format off\n"
+                            "\n")
 
     def common_structs(self):
-        self._stream.write('''
-/// Missing in Action (MIA) structure
-typedef struct {
-  uint32_t is_mia : 1;          ///< Missing in action flag
-  uint32_t mia_counter_ms : 31; ///< Missing in action counter
-} dbc_mia_info_t;
+        self._stream.write(
+            "/// Missing in Action (MIA) structure\n"
+            "typedef struct {\n"
+            "  uint32_t is_mia : 1;          ///< Flag indicating that message is MIA\n"
+            "  uint32_t mia_counter_ms : 31; ///< Counter used to track MIA\n"
+            "} dbc_mia_info_t;\n"
+            "\n"
+            "typedef struct {\n"
+            "  uint32_t message_id;\n"
+            "  uint8_t message_dlc;          ///< Data Length Code of the CAN message\n"
+            "} dbc_message_header_t;\n")
 
-typedef struct {
-  uint32_t message_id;
-  uint8_t message_dlc;          ///< Data length code of the CAN message
-} dbc_message_header_t;
-''')
+    def generate_enums(self):
+        code = ""
+        choices = {}
 
-    def message_header_instances(self, messages):
+        for message in self._messages:
+            for signal in message.signals:
+                if signal.choices is not None:
+                    choices[signal.name] = signal.choices
+
+        # signal_name is the key',
+        # enum_list is:
+        # OrderedDict([(2, 'DRIVER_HEARTBEAT_cmd_REBOOT'), (1, 'DRIVER_HEARTBEAT_cmd_SYNC'), (0, 'DRIVER_HEARTBEAT_cmd_NOOP')])
+        for signal_name, enum_list in choices.items():
+            values = ""
+            for value, enum_item_name in enum_list.items():
+                values += "  {0} = {1},\n".format(enum_item_name, value)
+
+            code += ("\n"
+                     "// Enumeration for {0}\n"
+                     "typedef enum {{\n"
+                     "{1}"
+                     "}} {2}{3};\n").format(signal_name, values, signal_name, enum_postfix)
+
+        self._stream.write(code)
+
+    def message_header_instances(self):
         self._stream.write('\n// Message headers containing CAN message IDs and their DLCs\n')
-        for message in messages:
+        for message in self._messages:
             self._stream.write('static const dbc_message_header_t dbc_header_{0}'.format(message.name).ljust(80))
-            self._stream.write(' = {{ {1}, {2} }};\n'.format(
+            self._stream.write(' = {{ {1}U, {2} }};\n'.format(
                 message.name, str(message.frame_id).rjust(8), message.length))
 
-    def structs(self, messages, generate_layout=False):
+    def structs(self, generate_layout=False):
         # https://cantools.readthedocs.io/en/latest/#cantools.database.can.Message
-        for message in messages:
-            message_layout = ("\n"+message.layout_string() if generate_layout else "")
-            signal_members = self._gen_struct_signals(message)
+        for message in self._messages:
+            message_layout = ("\n" + message.layout_string() if generate_layout else "")
+            signal_members = self._generate_struct_signals(message)
 
-            self._stream.write('''
-/**
- * {0}: 
- *   Sent by '{1}' {2}
- */
-typedef struct {{
-{3}}} dbc_{4}_s;
-'''.format(message.name, message.senders[0], message_layout, signal_members, message.name))
+            self._stream.write(("\n"
+                                "/**\n"
+                                " * {0}: \n"
+                                " *   Sent by '{1}' {2}\n"
+                                " */\n"
+                                "typedef struct {{\n"
+                                "{3}}} dbc_{4}_s;\n"
+                                ).format(message.name, message.senders[0], message_layout, signal_members,
+                                         message.name))
 
-    def encode_methods(self, messages):
-        for message in messages:
-            self._stream.write('''
-/**
- * {0}:
- *   Sent by '{1}' with message ID {2} composed of {3} bytes
- */
-static inline dbc_message_header_t dbc_encode_{4}(uint8_t bytes[8], const dbc_{5}_s *message) {{
-{6}
-  return dbc_header_{7};
-}}
-'''.format(message.name, message.senders[0], message.frame_id, message.length,
-           message.name, message.name, self._get_encode_signals_code(message), message.name))
+    def decode_methods(self):
+        for message in self._messages:
+            validation_check = ("\n"
+                                "  if (header.message_id != dbc_header_{0}.message_id) {{\n"
+                                "    return !success;\n"
+                                "  }} else if (header.message_dlc != dbc_header_{1}.message_dlc) {{\n"
+                                "    return !success;\n"
+                                "  }} else {{\n"
+                                "    // DLC and message ID check is good\n"
+                                "  }}\n"
+                                ).format(message.name, message.name)
 
-    def decode_methods(self, messages):
-        for message in messages:
-            validation_check = '''
-  if (header.message_id != dbc_header_{0}.message_id) {{
-    return !success;
-  }} else if (header.message_dlc != dbc_header_{1}.message_dlc) {{
-    return !success;
-  }} else {{
-    // DLC and message ID check is good
-  }}
-'''.format(message.name, message.name)
-
-            self._stream.write('''
-/**
- * {0}: Sent by {1}
- */
-static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {{
-  const bool success = true;
-{4}
-{5}
-
-  return success;
-}}
-'''.format(message.name, message.senders[0], message.name, message.name, validation_check, self._get_decode_signals_code(message)))
+            self._stream.write(("\n"
+                                "/**\n"
+                                " * {0}: Sent by {1}\n"
+                                " */\n"
+                                "static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {{\n"
+                                "  const bool success = true;\n"
+                                "{4}\n"
+                                "{5}\n"
+                                "\n"
+                                "  return success;\n"
+                                "}}\n"
+                                ).format(message.name, message.senders[0], message.name, message.name, validation_check,
+                                         self._get_decode_signals_code(message)))
 
     def _get_decode_signals_code(self, message):
         code = "  uint64_t raw = 0;\n"
@@ -153,14 +175,16 @@ static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t
             bit_count += bits_in_this_byte
 
         # If the signal is not defined as a signed, then we will use this code
-        unsigned_code = "message->{0} = (({1} * {2}) + ({3}));\n".format(signal.name, raw_sig_name, signal.scale, signal.offset)
+        unsigned_code = "message->{0} = (({1} * {2}f) + ({3}));\n".format(signal.name, raw_sig_name, signal.scale,
+                                                                         signal.offset)
 
         if signal.is_signed:
             mask = "(1 << {0})".format((signal.length - 1))
             s = ""
             s += "  if ({0} & {1}) {{ // Check signed bit\n".format(raw_sig_name, mask)
             s += "    message->{0} = ".format(signal.name)
-            s += "(((((uint64_t)-1 << {0}) | {1}) * {2}) + ({3}));\n".format(str(signal.length - 1), raw_sig_name, str(signal.scale), signal.offset)
+            s += "(((((uint64_t)-1 << {0}) | {1}) * {2}f) + ({3}));\n".format(str(signal.length - 1), raw_sig_name,
+                                                                             str(signal.scale), signal.offset)
             s += "  } else {\n"
             s += "    " + unsigned_code
             s += "  }\n"
@@ -169,18 +193,38 @@ static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t
 
         # Optimize
         s = s.replace(" + (0)", "")
-        s = s.replace(" * 1)", ")")
+        s = s.replace(" * 1f)", ")")
         code += s
 
         return code
 
+    def encode_methods(self):
+        for message in self._messages:
+            encode_code = self._get_encode_signals_code(message)
+
+            self._stream.write(("\n"
+                                "/**\n"
+                                " * {0}:\n"
+                                " *   Sent by '{1}' with message ID {2} composed of {3} bytes\n"
+                                " */\n"
+                                "static inline dbc_message_header_t dbc_encode_{4}(uint8_t bytes[8], const dbc_{5}_s *message) {{\n"
+                                "{6}\n"
+                                "\n"
+                                "  return dbc_header_{7};\n"
+                                "}}\n"
+                                ).format(message.name, message.senders[0], message.frame_id, message.length,
+                                         message.name, message.name, encode_code,
+                                         message.name))
+
     def _get_encode_signals_code(self, message):
-        code = '''  uint64_t raw = 0;
-  memset(bytes, 0, 8);
+        code = "  uint64_t raw = 0;\n"\
+               "  memset(bytes, 0, 8);\n"\
+               "\n"
 
-'''
-
-        if not message.is_multiplexed():
+        if message.is_multiplexed():
+            code += "  // Multiplexed signals are not handled yet\n"
+            code += "  (void)raw;\n\n"
+        else:
             for signal in message.signals:
                 code += self._get_encode_signal_code(signal, "raw")
                 code += '\n'
@@ -192,20 +236,29 @@ static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t
         # Compute binary value
         # Encode should subtract offset then divide
         # TODO: Might have to add -0.5 for a negative signal
-        raw_sig_code = "  {0} = ((uint64_t)(((message->{1} - ({2})) / {3}) + 0.5))".format(raw_sig_name, signal.name, signal.offset,
-                                                                                    signal.scale)
-        raw_extract = ""
+        raw_sig_code = "  {0} = ((uint64_t)(((message->{1} - ({2})) / {3}f) + 0.5f))".format(raw_sig_name, signal.name,
+                                                                                           signal.offset,
+                                                                                           signal.scale)
+
+        offset_string = ""
+        if signal.offset != 0:
+            offset_string = " and offset={0}".format(signal.offset)
+
+        signal_comment = ""
         if signal.is_signed:
-            raw_extract += "  // Stuff a real signed number into the DBC {0}-bit signal\n".format(signal.length)
-        raw_extract += raw_sig_code + " & 0x{0};\n".format(format(2 ** signal.length - 1, '02x'))
+            signal_comment = "  // Encode to raw {0}-bit signed signal with scale={1}{2}\n".format(signal.length, signal.scale, offset_string)
+        else:
+            signal_comment = "  // Encode to raw {0}-bit signal with scale={1}{2}\n".format(signal.length, signal.scale, offset_string)
+
+        raw_extract = raw_sig_code + " & 0x{0};\n".format(format(2 ** signal.length - 1, '02x'))
 
         # Optimize
         raw_extract = raw_extract.replace(" - (0)", "")
-        raw_extract = raw_extract.replace(" / 1)", ")")
+        raw_extract = raw_extract.replace(" / 1f)", ")")
         if signal.scale == 1:
-            raw_extract = raw_extract.replace(" + 0.5", "")
+            raw_extract = raw_extract.replace(" + 0.5f", "")
 
-        code = raw_extract
+        code = signal_comment + raw_extract
 
         # Stuff the raw data into individual bytes
         bit_pos = signal.start
@@ -216,16 +269,17 @@ static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t
             bits_in_this_byte = min(8 - (bit_pos % 8), remaining)
 
             s = ""
-            s += "  bytes[{0}] |= (((uint8_t)({1} >> {2})".format(byte_num , raw_sig_name, str(bit_pos - signal.start).rjust(2))
+            s += "  bytes[{0}] |= (((uint8_t)({1} >> {2})".format(byte_num, raw_sig_name,
+                                                                  str(bit_pos - signal.start).rjust(2))
             s += " & 0x{0}) << {1})".format(format(2 ** bits_in_this_byte - 1, '02x'), str(bit_pos % 8))
             s += "; // {0} bits at B{1}\n".format(str(bits_in_this_byte), str(bit_pos))
 
             # Optimize
-            #s = s.replace(" >> 0", "")
-            s = s.replace(" << 0", "    ")
+            s = s.replace(" >> 0", "")
+            s = s.replace(" << 0", "     ")
 
             # Cannot optimize by removing 0xff just for code safety
-            #s = s.replace(" & 0xff", "")
+            # s = s.replace(" & 0xff", "")
 
             code += s
             byte_num += 1
@@ -247,7 +301,7 @@ static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t
 '''
 
     # https://cantools.readthedocs.io/en/latest/#cantools.database.can.Signal
-    def _gen_struct_signals(self, message):
+    def _generate_struct_signals(self, message):
         signals_string = ""
 
         if not message.is_multiplexed():
@@ -270,7 +324,6 @@ static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t
                     type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name).ljust(40)
                     signals_string += "  {0}; // M{1}, Scale={2}\n".format(type_and_name, mux_id, signal.scale)
 
-
         return signals_string
 
     def _get_muxed_signals(self, message):
@@ -284,24 +337,28 @@ static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t
         return muxed_signals
 
     def _get_signal_type(self, signal):
-        t = "float";
+        signal_type = "float";
 
-        if (signal.scale * 1.0).is_integer():
-            _max = (2 ** signal.length) * signal.scale
+        if signal.choices is not None:
+            signal_type = signal.name + enum_postfix
+        elif (signal.scale * 1.0).is_integer():
+            max_value = (2 ** signal.length) * signal.scale
             if signal.is_signed:
-                _max *= 2
+                max_value *= 2
 
-            t = "uint32_t"
-            if _max <= 256:
-                t = "uint8_t"
-            elif _max <= 65536:
-                t = "uint16_t"
+            signal_type = "uint32_t"
+            if max_value <= 256:
+                signal_type = "uint8_t"
+            elif max_value <= 65536:
+                signal_type = "uint16_t"
 
             # If the signal is signed, or the offset is negative, remove "u" to use "int" type.
             if signal.is_signed or signal.offset < 0:
-                t = t[1:]
+                signal_type = signal_type[1:]
+        else:
+            signal_type = "float"
 
-        return t
+        return signal_type
 
 
 def main():
@@ -314,13 +371,15 @@ def main():
         exit(-1)
 
     dbc = cantools.database.load_file(dbc_filepath)
-    cw = code_writer(sys.stdout)
+    cw = code_writer(sys.stdout, dbc)
     cw.file_header(dbc_filepath)
     cw.common_structs()
-    cw.message_header_instances(dbc.messages)
-    cw.structs(dbc.messages)
-    cw.encode_methods(dbc.messages)
-    cw.decode_methods(dbc.messages)
+    cw.generate_enums()
+    cw.message_header_instances()
+    cw.structs()
+    cw.encode_methods()
+    cw.decode_methods()
+    cw.write_footer()
 
 
 if __name__ == "__main__":
