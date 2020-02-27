@@ -31,6 +31,7 @@ OBJ_DIR = VARIANT_DIR.Dir("obj")
 MAP_FILE = VARIANT_DIR.File("{}.map".format(PROJECT_DIR.name))
 SIZE_FILE = VARIANT_DIR.File("{}.size".format(PROJECT_DIR.name))
 UNIT_TEST_BUILD_DIR = VARIANT_DIR.Dir("test")
+AUTO_GENERATED_CODE_DIR = VARIANT_DIR.Dir("auto_generated")
 MOCK_DIR = project_dirnode.Dir("unittest_header_overrides")
 
 """ Source and include nodes """
@@ -46,6 +47,9 @@ SRC_DIRS_ROOT = [
 
 LINKER_FILES = [
     PROJECT_DIR.File("l0_lowlevel/linker/layout_lpc4078.ld"),
+]
+
+DBC_FILES = [
 ]
 
 EXCLUDED_SRC_FILES = []
@@ -139,6 +143,8 @@ format_filenodes = fsops.filter_files(
 if not no_clang_format:
     for filenode in format_filenodes:
         env_arm.ClangFormat(filenode=filenode, verbose=verbose)
+
+env_arm.DatabaseCodeGenerator(source=DBC_FILES, target=AUTO_GENERATED_CODE_DIR)
 
 
 """
