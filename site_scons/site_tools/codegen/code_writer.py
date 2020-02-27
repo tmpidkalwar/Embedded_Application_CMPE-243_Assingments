@@ -31,8 +31,10 @@ class CodeWriter(object):
         self._generate_enums()
         self._message_header_instances()
         self._structs()
+        self._mia_user_dependencies()
         self._encode_methods()
         self._decode_methods()
+        self._mia_methods()
         self._write_footer()
 
     def __str__(self):
@@ -51,11 +53,11 @@ class CodeWriter(object):
             "#include <stdint.h>\n"
             "#include <string.h>\n"
             "\n"
-            "#ifndef MIN_OF(x,y)\n"
-            "#define MIN_OF(x,y) (x) < (y) ? (x) : (y)\n"
+            "#ifndef MIN_OF\n"
+            "#define MIN_OF(x,y) ((x) < (y) ? (x) : (y))\n"
             "#endif\n"
-            "#ifndef MAX_OF(x,y)\n"
-            "#define MAX_OF(x,y) (x) > (y) ? (x) : (y)\n"
+            "#ifndef MAX_OF\n"
+            "#define MAX_OF(x,y) ((x) > (y) ? (x) : (y))\n"
             "#endif\n"
             "\n"
         ).format(dbc_filename))
@@ -71,15 +73,35 @@ class CodeWriter(object):
         self._stream.write(
             "/// Missing in Action (MIA) structure\n"
             "typedef struct {\n"
-            "  uint32_t is_mia : 1;          ///< Flag indicating that message is MIA\n"
-            "  uint32_t mia_counter_ms : 31; ///< Counter used to track MIA\n"
+            "  uint32_t mia_counter; ///< Counter used to track MIA\n"
             "} dbc_mia_info_t;\n"
             "\n"
             "typedef struct {\n"
             "  uint32_t message_id;\n"
-            "  uint8_t message_dlc;          ///< Data Length Code of the CAN message\n"
+            "  uint8_t message_dlc;  ///< Data Length Code of the CAN message\n"
             "} dbc_message_header_t;\n"
         )
+
+    def _mia_user_dependencies(self):
+        line = ("// " + "-"*(80-3) + "\n")
+
+        self._stream.write("\n")
+        self._stream.write(line)
+        self._stream.write("// User must define these extended MIA threshold\n")
+        self._stream.write(line)
+        for message in self._messages:
+            self._stream.write("extern const uint32_t dbc_mia_threshold_{0};\n".format(message.name))
+
+        self._stream.write("\n")
+        self._stream.write(line)
+        self._stream.write("// User must define these externed instances in their code externally\n")
+        self._stream.write("// These are copied during dbc_decode_*() when message MIA timeout occurs\n")
+        self._stream.write(line)
+        for message in self._messages:
+            self._stream.write(("extern const dbc_{0}_s ".format(message.name)).ljust(40))
+            self._stream.write("dbc_mia_replacement_{0};\n".format(message.name))
+
+        self._stream.write("\n")
 
     def _generate_enums(self):
         code = ""
@@ -120,6 +142,9 @@ class CodeWriter(object):
             message_layout = ("\n" + message.layout_string() if generate_layout else "")
             signal_members = self._generate_struct_signals(message)
 
+            # MIA only makes sense for messages we receive, and not the messages we send
+            mia = "  dbc_mia_info_t mia_info;\n"
+
             self._stream.write((
                 "\n"
                 "/**\n"
@@ -127,8 +152,10 @@ class CodeWriter(object):
                 " *   Sent by '{1}' {2}\n"
                 " */\n"
                 "typedef struct {{\n"
-                "{3}}} dbc_{4}_s;\n"
-            ).format(message.name, message.senders[0], message_layout, signal_members, message.name))
+                "{3}"
+                "\n"
+                "{4}}} dbc_{5}_s;\n"
+            ).format(message.name, message.senders[0], message_layout, mia, signal_members, message.name))
 
     def _decode_methods(self):
         for message in self._messages:
@@ -153,9 +180,11 @@ class CodeWriter(object):
                 "{4}\n"
                 "{5}\n"
                 "\n"
+                "  message->mia_info.mia_counter = 0;\n"
                 "  return success;\n"
                 "}}\n"
             ).format(message.name, message.senders[0], message.name, message.name, validation_check, self._get_decode_signals_code(message)))
+        self._stream.write("\n")
 
     def _get_decode_signals_code(self, message):
         code = "  uint64_t raw = 0;\n"
@@ -214,7 +243,7 @@ class CodeWriter(object):
             # The only corner case is that this will not work for float, but float should not
             # be listed as a signed number
             signed_max = "(({0})-1)".format(self._get_signal_type(signal))
-            s += "((((({0} << {1}) | {2}) * {3}f) + ({4}));\n".format(
+            s += "(((({0} << {1}) | {2}) * {3}f) + ({4}));\n".format(
                 signed_max, str(signal.length - 1), raw_sig_name, str(signal.scale), signal.offset
             )
 
@@ -338,16 +367,28 @@ class CodeWriter(object):
 
         return code
 
-        '''
-        # Min/Max check
-        if signal.minimum is not None or signal.maximum is not None:
-            # If signal is unsigned, and min value is zero, then do not check for '< 0'
-            if not (self.is_unsigned_var() and self.min_val == 0):
-                code += ("    if(" + var_name + " < " + self.min_val_str + ") { " + var_name + " = " + self.min_val_str + "; } // Min value: " + self.min_val_str + "\n")
-            else:
-                code += "    // Not doing min value check since the signal is unsigned already\n"
-            code += ("    if(" + var_name + " > " + self.max_val_str + ") { " + var_name + " = " + self.max_val_str + "; } // Max value: " + self.max_val_str + "\n")
-        '''
+    def _mia_methods(self):
+        for message in self._messages:
+            self._stream.write("bool dbc_service_mia_{0}(dbc_{0}_s *message, const uint32_t increment_mia_by) {{\n"
+                               "  bool message_just_entered_mia = false;\n"
+                               "\n"
+                               "  if (message->mia_info.mia_counter >= dbc_mia_threshold_{0}) {{\n"
+                               "    // Message is already MIA\n"
+                               "  }} else {{\n"
+                               "    message->mia_info.mia_counter += increment_mia_by;\n"
+                               "    message_just_entered_mia = (message->mia_info.mia_counter >= dbc_mia_threshold_{0});\n"
+                               "\n"
+                               "    if (message_just_entered_mia) {{\n"
+                               "      const dbc_mia_info_t previous_mia = message->mia_info;\n"
+                               "      *message = dbc_mia_replacement_{0};\n"
+                               "      message->mia_info = previous_mia;\n"
+                               "    }}\n"
+                               "  }}\n"
+                               "\n"
+                               "  return message_just_entered_mia;\n"
+                               "}}\n"
+                               "\n".format(message.name)
+                               )
 
     def _generate_struct_signals(self, message):
         signals_string = ""
