@@ -41,6 +41,7 @@ def database_code_generator_method(env, source, target):
 
     env.Append(CPPPATH=[target.abspath])
 
+    error = 0
     for filenode in database_filenodes:
         command = [
             "python",
