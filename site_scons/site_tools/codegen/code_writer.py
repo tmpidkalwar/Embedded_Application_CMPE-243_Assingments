@@ -51,6 +51,13 @@ class CodeWriter(object):
             "#include <stdint.h>\n"
             "#include <string.h>\n"
             "\n"
+            "#ifndef MIN_OF(x,y)\n"
+            "#define MIN_OF(x,y) (x) < (y) ? (x) : (y)\n"
+            "#endif\n"
+            "#ifndef MAX_OF(x,y)\n"
+            "#define MAX_OF(x,y) (x) > (y) ? (x) : (y)\n"
+            "#endif\n"
+            "\n"
         ).format(dbc_filename))
 
     def _write_footer(self):
@@ -200,13 +207,20 @@ class CodeWriter(object):
         if signal.is_signed:
             mask = "(1 << {0})".format((signal.length - 1))
             s = ""
-            s += "  if ({0} & {1}) {{ // Check signed bit\n".format(raw_sig_name, mask)
+            s += "  if ({0} & {1}) {{ // Check signed bit of the raw DBC signal and sign extend from 'raw'\n".format(raw_sig_name, mask)
             s += "    message->{0} = ".format(signal.name)
-            s += "(((((uint64_t)-1 << {0}) | {1}) * {2}f) + ({3}));\n".format(str(signal.length - 1), raw_sig_name,
-                                                                             str(signal.scale), signal.offset)
-            s += "  } else {\n"
-            s += "    " + unsigned_code
-            s += "  }\n"
+
+            # Create signed extended number by first getting a type similar to '(int16_t)-1'
+            # The only corner case is that this will not work for float, but float should not
+            # be listed as a signed number
+            signed_max = "(({0})-1)".format(self._get_signal_type(signal))
+            s += "((((({0} << {1}) | {2}) * {3}f) + ({4}));\n".format(
+                signed_max, str(signal.length - 1), raw_sig_name, str(signal.scale), signal.offset
+            )
+
+            s += ("  }} else {{\n"
+                  "    {0}"
+                  "  }}\n").format(unsigned_code)
         else:
             s = "  " + unsigned_code
 
@@ -254,9 +268,26 @@ class CodeWriter(object):
         # Compute binary value
         # Encode should subtract offset then divide
         # TODO: Might have to add -0.5 for a negative signal
-        raw_sig_code = "  {0} = ((uint64_t)(((message->{1} - ({2})) / {3}f) + 0.5f))".format(raw_sig_name, signal.name,
-                                                                                           signal.offset,
-                                                                                           signal.scale)
+
+        raw_sig_code = ""
+        min_max_comment = ""
+        if signal.minimum is None and signal.maximum is None:
+            raw_sig_code = "  {0} = ((uint64_t)(((message->{1} - ({2})) / {3}f) + 0.5f))".format(
+                raw_sig_name, signal.name, signal.offset, signal.scale
+            )
+        else:
+            min_max_comment = " within range of [{0} -> {1}]".format(signal.minimum, signal.maximum)
+
+            # Cast to int64_t or higher type may be required becuase we may have int8_t signal with
+            # value of 100, with an offset of -200 which will roll over and produce incorrect result
+            if self._get_signal_type(signal) == "float":
+                cast = ""
+            else:
+                cast = "(int64_t)"
+
+            raw_sig_code = "  {0} = ((uint64_t)(((MAX_OF(MIN_OF({1}message->{2},{3}),{4}) - ({5})) / {6}f) + 0.5f))".format(
+                raw_sig_name, cast, signal.name, signal.maximum, signal.minimum, signal.offset, signal.scale
+            )
 
         offset_string = ""
         if signal.offset != 0:
@@ -264,9 +295,9 @@ class CodeWriter(object):
 
         signal_comment = ""
         if signal.is_signed:
-            signal_comment = "  // Encode to raw {0}-bit signed signal with scale={1}{2}\n".format(signal.length, signal.scale, offset_string)
+            signal_comment = "  // Encode to raw {0}-bit SIGNED signal with scale={1}{2}{3}\n".format(signal.length, signal.scale, offset_string, min_max_comment)
         else:
-            signal_comment = "  // Encode to raw {0}-bit signal with scale={1}{2}\n".format(signal.length, signal.scale, offset_string)
+            signal_comment = "  // Encode to raw {0}-bit signal with scale={1}{2}{3}\n".format(signal.length, signal.scale, offset_string, min_max_comment)
 
         raw_extract = raw_sig_code + " & 0x{0};\n".format(format(2 ** signal.length - 1, '02x'))
 
@@ -323,13 +354,14 @@ class CodeWriter(object):
 
         if not message.is_multiplexed():
             for signal in message.signals:
-                type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name).ljust(40)
-                signals_string += "  {0}; // Scale={1}\n".format(type_and_name, signal.scale)
+                type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name)
+                comment = "" if signal.comment is None else " // " + signal.comment
+                signals_string += "  {0};{1}\n".format(type_and_name, comment)
         else:
             # For a muxed message, first generate non-mux symbols (which includes the mux itself)
             for signal in message.signals:
                 if signal.multiplexer_ids is None:
-                    type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name).ljust(40)
+                    type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name)
                     signals_string += "  {0}; // Non-muxed signal\n".format(type_and_name)
 
             # Create a dictionary of a list where the key is the mux symbol
@@ -338,8 +370,8 @@ class CodeWriter(object):
             for mux_id in muxed_signals:
                 signals_string += '\n'
                 for signal in muxed_signals[mux_id]:
-                    type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name).ljust(40)
-                    signals_string += "  {0}; // M{1}, Scale={2}\n".format(type_and_name, mux_id, signal.scale)
+                    type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name)
+                    signals_string += "  {0}; // M{1}\n".format(type_and_name, mux_id)
 
         return signals_string
 
