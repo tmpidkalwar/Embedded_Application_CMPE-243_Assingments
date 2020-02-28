@@ -17,14 +17,15 @@ References:
 """
 
 ENUM_SUFFIX = "_e"
-
+GENERATE_ALL_NODE_NAME = "ALL"
 
 class CodeWriter(object):
-    def __init__(self, dbc_filepath):
+    def __init__(self, dbc_filepath, dbc_node_name):
         self._stream = StringIO()
+        self._dbc_node_name = dbc_node_name
+
         self._dbc_filepath = dbc_filepath
         self._dbc = cantools.database.load_file(dbc_filepath)
-        self._messages = self._dbc.messages
 
         self._file_header()
         self._common_structs()
@@ -77,7 +78,7 @@ class CodeWriter(object):
             " * dbc_decode_*() API checks against the provided header to make sure we are decoding the right message\n"
             " */\n"
             "typedef struct {\n"
-            "  uint32_t message_id;\n"
+            "  uint32_t message_id;  ///< CAN bus message identification\n"
             "  uint8_t message_dlc;  ///< Data Length Code of the CAN message\n"
             "} dbc_message_header_t;\n"
         )
@@ -90,15 +91,15 @@ class CodeWriter(object):
         self._stream.write("// When a message's MIA counter reaches this value\n"
                            "// corresponding MIA replacements occur\n")
         self._stream.write(line)
-        for message in self._messages:
+        for message in self._dbc.messages:
             self._stream.write("extern const uint32_t dbc_mia_threshold_{0};\n".format(message.name))
 
         self._stream.write("\n")
         self._stream.write(line)
         self._stream.write("// User must define these externed instances in their code to use MIA functions\n")
-        self._stream.write("// These are copied during dbc_decode_*() when message MIA timeout occurs\n")
+        self._stream.write("// These are copied during dbc_service_mia_*() when message MIA timeout occurs\n")
         self._stream.write(line)
-        for message in self._messages:
+        for message in self._dbc.messages:
             self._stream.write(("extern const dbc_{0}_s ".format(message.name)).ljust(40))
             self._stream.write("dbc_mia_replacement_{0};\n".format(message.name))
 
@@ -108,7 +109,7 @@ class CodeWriter(object):
         code = ""
         choices = {}
 
-        for message in self._messages:
+        for message in self._dbc.messages:
             for signal in message.signals:
                 if signal.choices is not None:
                     choices[signal.name] = signal.choices
@@ -133,13 +134,13 @@ class CodeWriter(object):
 
     def _message_header_instances(self):
         self._stream.write('\n// Message headers containing CAN message IDs and their DLCs; @see dbc_message_header_t\n')
-        for message in self._messages:
+        for message in self._dbc.messages:
             self._stream.write('static const dbc_message_header_t dbc_header_{0}'.format(message.name).ljust(80))
             self._stream.write(' = {{ {1}U, {2} }};\n'.format(
                 message.name, str(message.frame_id).rjust(8), message.length))
 
     def _structs(self, generate_layout=False):
-        for message in self._messages:
+        for message in self._dbc.messages:
             message_layout = ("\n" + message.layout_string() if generate_layout else "")
             signal_members = self._generate_struct_signals(message)
 
@@ -155,36 +156,44 @@ class CodeWriter(object):
                 "typedef struct {{\n"
                 "{3}"
                 "\n"
-                "{4}}} dbc_{5}_s;\n"
-            ).format(message.name, message.senders[0], message_layout, mia, signal_members, message.name))
+                "{4}}} dbc_{0}_s;\n"
+            ).format(message.name, message.senders[0], message_layout, mia, signal_members))
 
     def _decode_methods(self):
-        for message in self._messages:
-            validation_check = (
-                "\n"
-                "  if (header.message_id != dbc_header_{0}.message_id) {{\n"
-                "    return !success;\n"
-                "  }} else if (header.message_dlc != dbc_header_{1}.message_dlc) {{\n"
-                "    return !success;\n"
-                "  }} else {{\n"
-                "    // DLC and message ID check is good\n"
-                "  }}\n"
-            ).format(message.name, message.name)
+        for message in self._dbc.messages:
+            if not self._message_is_relevant(message):
+                self._stream.write((
+                    "\n"
+                    "/**\n"
+                    " * {0}:\n"
+                    " *   Sent by '{1}' with message ID {2} composed of {3} bytes\n"
+                    " *   **Since you are not the transmitter, this function is not generated for you**\n"
+                    " */\n"
+                    "// static inline dbc_message_header_t dbc_encode_{0}(uint8_t bytes[8], const dbc_{0}_s *message);\n"
+                ).format(message.name, message.senders[0], message.frame_id, message.length))
+            else:
+                validation_check = (
+                    "\n"
+                    "  if ((header.message_id != dbc_header_{0}.message_id) || (header.message_dlc != dbc_header_{1}.message_dlc)) {{\n"
+                    "    return !success;\n"
+                    "  }}\n"
+                ).format(message.name, message.name)
 
-            self._stream.write((
-                "\n"
-                "/**\n"
-                " * {0}: Sent by {1}\n"
-                " */\n"
-                "static inline bool dbc_decode_{2}(dbc_{3}_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {{\n"
-                "  const bool success = true;\n"
-                "{4}\n"
-                "{5}\n"
-                "\n"
-                "  message->mia_info.mia_counter = 0;\n"
-                "  return success;\n"
-                "}}\n"
-            ).format(message.name, message.senders[0], message.name, message.name, validation_check, self._get_decode_signals_code(message)))
+                self._stream.write((
+                    "\n"
+                    "/**\n"
+                    " * {0}: Sent by {1}\n"
+                    " */\n"
+                    "static inline bool dbc_decode_{0}(dbc_{0}_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {{\n"
+                    "  const bool success = true;\n"
+                    "{2}\n"
+                    "{3}\n"
+                    "\n"
+                    "  message->mia_info.mia_counter = 0;\n"
+                    "  return success;\n"
+                    "}}\n"
+                ).format(message.name, message.senders[0], validation_check, self._get_decode_signals_code(message)))
+
         self._stream.write("\n")
 
     def _get_decode_signals_code(self, message):
@@ -262,7 +271,7 @@ class CodeWriter(object):
         return code
 
     def _encode_methods(self):
-        for message in self._messages:
+        for message in self._dbc.messages:
             encode_code = self._get_encode_signals_code(message)
 
             self._stream.write((
@@ -271,12 +280,12 @@ class CodeWriter(object):
                 " * {0}:\n"
                 " *   Sent by '{1}' with message ID {2} composed of {3} bytes\n"
                 " */\n"
-                "static inline dbc_message_header_t dbc_encode_{4}(uint8_t bytes[8], const dbc_{5}_s *message) {{\n"
-                "{6}\n"
+                "static inline dbc_message_header_t dbc_encode_{0}(uint8_t bytes[8], const dbc_{0}_s *message) {{\n"
+                "{4}\n"
                 "\n"
-                "  return dbc_header_{7};\n"
+                "  return dbc_header_{0};\n"
                 "}}\n"
-            ).format(message.name, message.senders[0], message.frame_id, message.length, message.name, message.name, encode_code, message.name))
+            ).format(message.name, message.senders[0], message.frame_id, message.length, encode_code))
 
     def _get_encode_signals_code(self, message):
         code = "  uint64_t raw = 0;\n"\
@@ -378,21 +387,31 @@ class CodeWriter(object):
         return code
 
     def _mia_methods(self):
-        for message in self._messages:
+        self._stream.write(
+            "// Do not use this function\n"
+            "static inline bool dbc_service_mia_for(dbc_mia_info_t *mia_info, const uint32_t increment_mia_by, const uint32_t threshold) {\n"
+            "  bool message_just_entered_mia = false;\n"
+            "\n"
+            "  if (mia_info->mia_counter >= threshold) {\n"
+            "    // Message is already MIA\n"
+            "  } else {\n"
+            "    mia_info->mia_counter += increment_mia_by;\n"
+            "    message_just_entered_mia = (mia_info->mia_counter >= threshold);\n"
+            "  }\n"
+            "\n"
+            "  return message_just_entered_mia;\n"
+            "}\n"
+            "\n"
+        )
+
+        for message in self._dbc.messages:
             self._stream.write("static inline bool dbc_service_mia_{0}(dbc_{0}_s *message, const uint32_t increment_mia_by) {{\n"
-                               "  bool message_just_entered_mia = false;\n"
+                               "  const bool message_just_entered_mia = dbc_service_mia_for(&(message->mia_info), increment_mia_by, dbc_mia_threshold_{0});\n"
                                "\n"
-                               "  if (message->mia_info.mia_counter >= dbc_mia_threshold_{0}) {{\n"
-                               "    // Message is already MIA\n"
-                               "  }} else {{\n"
-                               "    message->mia_info.mia_counter += increment_mia_by;\n"
-                               "    message_just_entered_mia = (message->mia_info.mia_counter >= dbc_mia_threshold_{0});\n"
-                               "\n"
-                               "    if (message_just_entered_mia) {{\n"
-                               "      const dbc_mia_info_t previous_mia = message->mia_info;\n"
-                               "      *message = dbc_mia_replacement_{0};\n"
-                               "      message->mia_info = previous_mia;\n"
-                               "    }}\n"
+                               "  if (message_just_entered_mia) {{\n"
+                               "    const dbc_mia_info_t previous_mia = message->mia_info;\n"
+                               "    *message = dbc_mia_replacement_{0};\n"
+                               "    message->mia_info = previous_mia;\n"
                                "  }}\n"
                                "\n"
                                "  return message_just_entered_mia;\n"
@@ -406,7 +425,12 @@ class CodeWriter(object):
         if not message.is_multiplexed():
             for signal in message.signals:
                 type_and_name = "{0} {1}".format(self._get_signal_type(signal), signal.name)
-                comment = "" if signal.comment is None else " // " + signal.comment
+
+                comment = "" if signal.comment is None else signal.comment
+                comment += "" if signal.unit is None else (" unit: " + signal.unit)
+                if len(comment) > 0:
+                    comment = ' // ' + comment
+
                 signals_string += "  {0};{1}\n".format(type_and_name, comment)
         else:
             # For a muxed message, first generate non-mux symbols (which includes the mux itself)
@@ -459,3 +483,6 @@ class CodeWriter(object):
             signal_type = "float"
 
         return signal_type
+
+    def _message_is_relevant(self, message):
+        return (message.senders[0].upper() == self._dbc_node_name.upper()) or (GENERATE_ALL_NODE_NAME == self._dbc_node_name.upper())

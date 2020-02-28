@@ -24,7 +24,7 @@ typedef struct {
  * dbc_decode_*() API checks against the provided header to make sure we are decoding the right message
  */
 typedef struct {
-  uint32_t message_id;
+  uint32_t message_id;  ///< CAN bus message identification
   uint8_t message_dlc;  ///< Data Length Code of the CAN message
 } dbc_message_header_t;
 
@@ -118,7 +118,7 @@ typedef struct {
   dbc_mia_info_t mia_info;
 
   uint8_t MOTOR_STATUS_wheel_error;
-  float MOTOR_STATUS_speed_kph;
+  float MOTOR_STATUS_speed_kph; //  unit: kph
 } dbc_MOTOR_STATUS_s;
 
 /**
@@ -169,7 +169,7 @@ extern const uint32_t dbc_mia_threshold_DBC_TEST4;
 
 // -----------------------------------------------------------------------------
 // User must define these externed instances in their code to use MIA functions
-// These are copied during dbc_decode_*() when message MIA timeout occurs
+// These are copied during dbc_service_mia_*() when message MIA timeout occurs
 // -----------------------------------------------------------------------------
 extern const dbc_DBC_TEST1_s            dbc_mia_replacement_DBC_TEST1;
 extern const dbc_DBC_TEST2_s            dbc_mia_replacement_DBC_TEST2;
@@ -368,12 +368,8 @@ static inline dbc_message_header_t dbc_encode_DBC_TEST4(uint8_t bytes[8], const 
 static inline bool dbc_decode_DBC_TEST1(dbc_DBC_TEST1_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {
   const bool success = true;
 
-  if (header.message_id != dbc_header_DBC_TEST1.message_id) {
+  if ((header.message_id != dbc_header_DBC_TEST1.message_id) || (header.message_dlc != dbc_header_DBC_TEST1.message_dlc)) {
     return !success;
-  } else if (header.message_dlc != dbc_header_DBC_TEST1.message_dlc) {
-    return !success;
-  } else {
-    // DLC and message ID check is good
   }
 
   uint64_t raw = 0;
@@ -403,12 +399,8 @@ static inline bool dbc_decode_DBC_TEST1(dbc_DBC_TEST1_s *message, const dbc_mess
 static inline bool dbc_decode_DBC_TEST2(dbc_DBC_TEST2_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {
   const bool success = true;
 
-  if (header.message_id != dbc_header_DBC_TEST2.message_id) {
+  if ((header.message_id != dbc_header_DBC_TEST2.message_id) || (header.message_dlc != dbc_header_DBC_TEST2.message_dlc)) {
     return !success;
-  } else if (header.message_dlc != dbc_header_DBC_TEST2.message_dlc) {
-    return !success;
-  } else {
-    // DLC and message ID check is good
   }
 
   uint64_t raw = 0;
@@ -449,12 +441,8 @@ static inline bool dbc_decode_DBC_TEST2(dbc_DBC_TEST2_s *message, const dbc_mess
 static inline bool dbc_decode_DBC_TEST3(dbc_DBC_TEST3_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {
   const bool success = true;
 
-  if (header.message_id != dbc_header_DBC_TEST3.message_id) {
+  if ((header.message_id != dbc_header_DBC_TEST3.message_id) || (header.message_dlc != dbc_header_DBC_TEST3.message_dlc)) {
     return !success;
-  } else if (header.message_dlc != dbc_header_DBC_TEST3.message_dlc) {
-    return !success;
-  } else {
-    // DLC and message ID check is good
   }
 
   uint64_t raw = 0;
@@ -482,12 +470,8 @@ static inline bool dbc_decode_DBC_TEST3(dbc_DBC_TEST3_s *message, const dbc_mess
 static inline bool dbc_decode_DRIVER_HEARTBEAT(dbc_DRIVER_HEARTBEAT_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {
   const bool success = true;
 
-  if (header.message_id != dbc_header_DRIVER_HEARTBEAT.message_id) {
+  if ((header.message_id != dbc_header_DRIVER_HEARTBEAT.message_id) || (header.message_dlc != dbc_header_DRIVER_HEARTBEAT.message_dlc)) {
     return !success;
-  } else if (header.message_dlc != dbc_header_DRIVER_HEARTBEAT.message_dlc) {
-    return !success;
-  } else {
-    // DLC and message ID check is good
   }
 
   uint64_t raw = 0;
@@ -504,12 +488,8 @@ static inline bool dbc_decode_DRIVER_HEARTBEAT(dbc_DRIVER_HEARTBEAT_s *message, 
 static inline bool dbc_decode_MOTOR_CMD(dbc_MOTOR_CMD_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {
   const bool success = true;
 
-  if (header.message_id != dbc_header_MOTOR_CMD.message_id) {
+  if ((header.message_id != dbc_header_MOTOR_CMD.message_id) || (header.message_dlc != dbc_header_MOTOR_CMD.message_dlc)) {
     return !success;
-  } else if (header.message_dlc != dbc_header_MOTOR_CMD.message_dlc) {
-    return !success;
-  } else {
-    // DLC and message ID check is good
   }
 
   uint64_t raw = 0;
@@ -529,12 +509,8 @@ static inline bool dbc_decode_MOTOR_CMD(dbc_MOTOR_CMD_s *message, const dbc_mess
 static inline bool dbc_decode_MOTOR_STATUS(dbc_MOTOR_STATUS_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {
   const bool success = true;
 
-  if (header.message_id != dbc_header_MOTOR_STATUS.message_id) {
+  if ((header.message_id != dbc_header_MOTOR_STATUS.message_id) || (header.message_dlc != dbc_header_MOTOR_STATUS.message_dlc)) {
     return !success;
-  } else if (header.message_dlc != dbc_header_MOTOR_STATUS.message_dlc) {
-    return !success;
-  } else {
-    // DLC and message ID check is good
   }
 
   uint64_t raw = 0;
@@ -555,12 +531,8 @@ static inline bool dbc_decode_MOTOR_STATUS(dbc_MOTOR_STATUS_s *message, const db
 static inline bool dbc_decode_SENSOR_SONARS(dbc_SENSOR_SONARS_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {
   const bool success = true;
 
-  if (header.message_id != dbc_header_SENSOR_SONARS.message_id) {
+  if ((header.message_id != dbc_header_SENSOR_SONARS.message_id) || (header.message_dlc != dbc_header_SENSOR_SONARS.message_dlc)) {
     return !success;
-  } else if (header.message_dlc != dbc_header_SENSOR_SONARS.message_dlc) {
-    return !success;
-  } else {
-    // DLC and message ID check is good
   }
 
   uint64_t raw = 0;
@@ -577,12 +549,8 @@ static inline bool dbc_decode_SENSOR_SONARS(dbc_SENSOR_SONARS_s *message, const 
 static inline bool dbc_decode_DBC_TEST4(dbc_DBC_TEST4_s *message, const dbc_message_header_t header, const uint8_t bytes[8]) {
   const bool success = true;
 
-  if (header.message_id != dbc_header_DBC_TEST4.message_id) {
+  if ((header.message_id != dbc_header_DBC_TEST4.message_id) || (header.message_dlc != dbc_header_DBC_TEST4.message_dlc)) {
     return !success;
-  } else if (header.message_dlc != dbc_header_DBC_TEST4.message_dlc) {
-    return !success;
-  } else {
-    // DLC and message ID check is good
   }
 
   uint64_t raw = 0;
@@ -612,153 +580,111 @@ static inline bool dbc_decode_DBC_TEST4(dbc_DBC_TEST4_s *message, const dbc_mess
   return success;
 }
 
-static inline bool dbc_service_mia_DBC_TEST1(dbc_DBC_TEST1_s *message, const uint32_t increment_mia_by) {
+// Do not use this function
+static inline bool dbc_service_mia_for(dbc_mia_info_t *mia_info, const uint32_t increment_mia_by, const uint32_t threshold) {
   bool message_just_entered_mia = false;
 
-  if (message->mia_info.mia_counter >= dbc_mia_threshold_DBC_TEST1) {
+  if (mia_info->mia_counter >= threshold) {
     // Message is already MIA
   } else {
-    message->mia_info.mia_counter += increment_mia_by;
-    message_just_entered_mia = (message->mia_info.mia_counter >= dbc_mia_threshold_DBC_TEST1);
+    mia_info->mia_counter += increment_mia_by;
+    message_just_entered_mia = (mia_info->mia_counter >= threshold);
+  }
 
-    if (message_just_entered_mia) {
-      const dbc_mia_info_t previous_mia = message->mia_info;
-      *message = dbc_mia_replacement_DBC_TEST1;
-      message->mia_info = previous_mia;
-    }
+  return message_just_entered_mia;
+}
+
+static inline bool dbc_service_mia_DBC_TEST1(dbc_DBC_TEST1_s *message, const uint32_t increment_mia_by) {
+  const bool message_just_entered_mia = dbc_service_mia_for(&(message->mia_info), increment_mia_by, dbc_mia_threshold_DBC_TEST1);
+
+  if (message_just_entered_mia) {
+    const dbc_mia_info_t previous_mia = message->mia_info;
+    *message = dbc_mia_replacement_DBC_TEST1;
+    message->mia_info = previous_mia;
   }
 
   return message_just_entered_mia;
 }
 
 static inline bool dbc_service_mia_DBC_TEST2(dbc_DBC_TEST2_s *message, const uint32_t increment_mia_by) {
-  bool message_just_entered_mia = false;
+  const bool message_just_entered_mia = dbc_service_mia_for(&(message->mia_info), increment_mia_by, dbc_mia_threshold_DBC_TEST2);
 
-  if (message->mia_info.mia_counter >= dbc_mia_threshold_DBC_TEST2) {
-    // Message is already MIA
-  } else {
-    message->mia_info.mia_counter += increment_mia_by;
-    message_just_entered_mia = (message->mia_info.mia_counter >= dbc_mia_threshold_DBC_TEST2);
-
-    if (message_just_entered_mia) {
-      const dbc_mia_info_t previous_mia = message->mia_info;
-      *message = dbc_mia_replacement_DBC_TEST2;
-      message->mia_info = previous_mia;
-    }
+  if (message_just_entered_mia) {
+    const dbc_mia_info_t previous_mia = message->mia_info;
+    *message = dbc_mia_replacement_DBC_TEST2;
+    message->mia_info = previous_mia;
   }
 
   return message_just_entered_mia;
 }
 
 static inline bool dbc_service_mia_DBC_TEST3(dbc_DBC_TEST3_s *message, const uint32_t increment_mia_by) {
-  bool message_just_entered_mia = false;
+  const bool message_just_entered_mia = dbc_service_mia_for(&(message->mia_info), increment_mia_by, dbc_mia_threshold_DBC_TEST3);
 
-  if (message->mia_info.mia_counter >= dbc_mia_threshold_DBC_TEST3) {
-    // Message is already MIA
-  } else {
-    message->mia_info.mia_counter += increment_mia_by;
-    message_just_entered_mia = (message->mia_info.mia_counter >= dbc_mia_threshold_DBC_TEST3);
-
-    if (message_just_entered_mia) {
-      const dbc_mia_info_t previous_mia = message->mia_info;
-      *message = dbc_mia_replacement_DBC_TEST3;
-      message->mia_info = previous_mia;
-    }
+  if (message_just_entered_mia) {
+    const dbc_mia_info_t previous_mia = message->mia_info;
+    *message = dbc_mia_replacement_DBC_TEST3;
+    message->mia_info = previous_mia;
   }
 
   return message_just_entered_mia;
 }
 
 static inline bool dbc_service_mia_DRIVER_HEARTBEAT(dbc_DRIVER_HEARTBEAT_s *message, const uint32_t increment_mia_by) {
-  bool message_just_entered_mia = false;
+  const bool message_just_entered_mia = dbc_service_mia_for(&(message->mia_info), increment_mia_by, dbc_mia_threshold_DRIVER_HEARTBEAT);
 
-  if (message->mia_info.mia_counter >= dbc_mia_threshold_DRIVER_HEARTBEAT) {
-    // Message is already MIA
-  } else {
-    message->mia_info.mia_counter += increment_mia_by;
-    message_just_entered_mia = (message->mia_info.mia_counter >= dbc_mia_threshold_DRIVER_HEARTBEAT);
-
-    if (message_just_entered_mia) {
-      const dbc_mia_info_t previous_mia = message->mia_info;
-      *message = dbc_mia_replacement_DRIVER_HEARTBEAT;
-      message->mia_info = previous_mia;
-    }
+  if (message_just_entered_mia) {
+    const dbc_mia_info_t previous_mia = message->mia_info;
+    *message = dbc_mia_replacement_DRIVER_HEARTBEAT;
+    message->mia_info = previous_mia;
   }
 
   return message_just_entered_mia;
 }
 
 static inline bool dbc_service_mia_MOTOR_CMD(dbc_MOTOR_CMD_s *message, const uint32_t increment_mia_by) {
-  bool message_just_entered_mia = false;
+  const bool message_just_entered_mia = dbc_service_mia_for(&(message->mia_info), increment_mia_by, dbc_mia_threshold_MOTOR_CMD);
 
-  if (message->mia_info.mia_counter >= dbc_mia_threshold_MOTOR_CMD) {
-    // Message is already MIA
-  } else {
-    message->mia_info.mia_counter += increment_mia_by;
-    message_just_entered_mia = (message->mia_info.mia_counter >= dbc_mia_threshold_MOTOR_CMD);
-
-    if (message_just_entered_mia) {
-      const dbc_mia_info_t previous_mia = message->mia_info;
-      *message = dbc_mia_replacement_MOTOR_CMD;
-      message->mia_info = previous_mia;
-    }
+  if (message_just_entered_mia) {
+    const dbc_mia_info_t previous_mia = message->mia_info;
+    *message = dbc_mia_replacement_MOTOR_CMD;
+    message->mia_info = previous_mia;
   }
 
   return message_just_entered_mia;
 }
 
 static inline bool dbc_service_mia_MOTOR_STATUS(dbc_MOTOR_STATUS_s *message, const uint32_t increment_mia_by) {
-  bool message_just_entered_mia = false;
+  const bool message_just_entered_mia = dbc_service_mia_for(&(message->mia_info), increment_mia_by, dbc_mia_threshold_MOTOR_STATUS);
 
-  if (message->mia_info.mia_counter >= dbc_mia_threshold_MOTOR_STATUS) {
-    // Message is already MIA
-  } else {
-    message->mia_info.mia_counter += increment_mia_by;
-    message_just_entered_mia = (message->mia_info.mia_counter >= dbc_mia_threshold_MOTOR_STATUS);
-
-    if (message_just_entered_mia) {
-      const dbc_mia_info_t previous_mia = message->mia_info;
-      *message = dbc_mia_replacement_MOTOR_STATUS;
-      message->mia_info = previous_mia;
-    }
+  if (message_just_entered_mia) {
+    const dbc_mia_info_t previous_mia = message->mia_info;
+    *message = dbc_mia_replacement_MOTOR_STATUS;
+    message->mia_info = previous_mia;
   }
 
   return message_just_entered_mia;
 }
 
 static inline bool dbc_service_mia_SENSOR_SONARS(dbc_SENSOR_SONARS_s *message, const uint32_t increment_mia_by) {
-  bool message_just_entered_mia = false;
+  const bool message_just_entered_mia = dbc_service_mia_for(&(message->mia_info), increment_mia_by, dbc_mia_threshold_SENSOR_SONARS);
 
-  if (message->mia_info.mia_counter >= dbc_mia_threshold_SENSOR_SONARS) {
-    // Message is already MIA
-  } else {
-    message->mia_info.mia_counter += increment_mia_by;
-    message_just_entered_mia = (message->mia_info.mia_counter >= dbc_mia_threshold_SENSOR_SONARS);
-
-    if (message_just_entered_mia) {
-      const dbc_mia_info_t previous_mia = message->mia_info;
-      *message = dbc_mia_replacement_SENSOR_SONARS;
-      message->mia_info = previous_mia;
-    }
+  if (message_just_entered_mia) {
+    const dbc_mia_info_t previous_mia = message->mia_info;
+    *message = dbc_mia_replacement_SENSOR_SONARS;
+    message->mia_info = previous_mia;
   }
 
   return message_just_entered_mia;
 }
 
 static inline bool dbc_service_mia_DBC_TEST4(dbc_DBC_TEST4_s *message, const uint32_t increment_mia_by) {
-  bool message_just_entered_mia = false;
+  const bool message_just_entered_mia = dbc_service_mia_for(&(message->mia_info), increment_mia_by, dbc_mia_threshold_DBC_TEST4);
 
-  if (message->mia_info.mia_counter >= dbc_mia_threshold_DBC_TEST4) {
-    // Message is already MIA
-  } else {
-    message->mia_info.mia_counter += increment_mia_by;
-    message_just_entered_mia = (message->mia_info.mia_counter >= dbc_mia_threshold_DBC_TEST4);
-
-    if (message_just_entered_mia) {
-      const dbc_mia_info_t previous_mia = message->mia_info;
-      *message = dbc_mia_replacement_DBC_TEST4;
-      message->mia_info = previous_mia;
-    }
+  if (message_just_entered_mia) {
+    const dbc_mia_info_t previous_mia = message->mia_info;
+    *message = dbc_mia_replacement_DBC_TEST4;
+    message->mia_info = previous_mia;
   }
 
   return message_just_entered_mia;

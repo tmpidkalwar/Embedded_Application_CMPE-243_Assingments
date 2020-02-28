@@ -19,6 +19,10 @@ def get_args():
         "--print-only",
         action="store_true",
     )
+    arg_parser.add_argument(
+        "--dbc-node-name",
+        required=True,
+    )
     return arg_parser.parse_args()
 
 
@@ -27,6 +31,7 @@ def main():
     dbc_filepath = args.dbc
     output = args.output
     print_only = args.print_only
+    dbc_node_name = args.dbc_node_name
 
     if not os.path.isfile(dbc_filepath):
         print("Unable to find DBC file: [{}]".format(dbc_filepath))
@@ -43,7 +48,7 @@ def main():
         else:
             output_filepath = output
 
-    code_writer = CodeWriter(dbc_filepath)
+    code_writer = CodeWriter(dbc_filepath, dbc_node_name)
 
     if not print_only:
         if not os.path.isdir(os.path.dirname(output_filepath)):
