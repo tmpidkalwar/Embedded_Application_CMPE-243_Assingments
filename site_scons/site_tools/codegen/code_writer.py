@@ -63,11 +63,7 @@ class CodeWriter(object):
         ).format(dbc_filename))
 
     def _write_footer(self):
-        self._stream.write(
-            "\n"
-            "// clang-format off\n"
-             "\n"
-        )
+        self._stream.write( "// clang-format off\n")
 
     def _common_structs(self):
         self._stream.write(
@@ -76,6 +72,10 @@ class CodeWriter(object):
             "  uint32_t mia_counter; ///< Counter used to track MIA\n"
             "} dbc_mia_info_t;\n"
             "\n"
+            "/**\n"
+            " * dbc_encode_*() API returns this instance to indicate message ID and DLC that should be used\n"
+            " * dbc_decode_*() API checks against the provided header to make sure we are decoding the right message\n"
+            " */\n"
             "typedef struct {\n"
             "  uint32_t message_id;\n"
             "  uint8_t message_dlc;  ///< Data Length Code of the CAN message\n"
@@ -87,14 +87,15 @@ class CodeWriter(object):
 
         self._stream.write("\n")
         self._stream.write(line)
-        self._stream.write("// User must define these extended MIA threshold\n")
+        self._stream.write("// When a message's MIA counter reaches this value\n"
+                           "// corresponding MIA replacements occur\n")
         self._stream.write(line)
         for message in self._messages:
             self._stream.write("extern const uint32_t dbc_mia_threshold_{0};\n".format(message.name))
 
         self._stream.write("\n")
         self._stream.write(line)
-        self._stream.write("// User must define these externed instances in their code externally\n")
+        self._stream.write("// User must define these externed instances in their code to use MIA functions\n")
         self._stream.write("// These are copied during dbc_decode_*() when message MIA timeout occurs\n")
         self._stream.write(line)
         for message in self._messages:
@@ -131,7 +132,7 @@ class CodeWriter(object):
         self._stream.write(code)
 
     def _message_header_instances(self):
-        self._stream.write('\n// Message headers containing CAN message IDs and their DLCs\n')
+        self._stream.write('\n// Message headers containing CAN message IDs and their DLCs; @see dbc_message_header_t\n')
         for message in self._messages:
             self._stream.write('static const dbc_message_header_t dbc_header_{0}'.format(message.name).ljust(80))
             self._stream.write(' = {{ {1}U, {2} }};\n'.format(
@@ -242,7 +243,7 @@ class CodeWriter(object):
             # Create signed extended number by first getting a type similar to '(int16_t)-1'
             # The only corner case is that this will not work for float, but float should not
             # be listed as a signed number
-            signed_max = "(({0})-1)".format(self._get_signal_type(signal))
+            signed_max = "UINT32_MAX"
             s += "(((({0} << {1}) | {2}) * {3}f) + ({4}));\n".format(
                 signed_max, str(signal.length - 1), raw_sig_name, str(signal.scale), signal.offset
             )
@@ -298,24 +299,33 @@ class CodeWriter(object):
         # Encode should subtract offset then divide
         # TODO: Might have to add -0.5 for a negative signal
 
+        signal_type = self._get_signal_type(signal)
+        signal_is_float = self._get_signal_type(signal) == "float"
+
+        # Cast to int64_t or higher type may be required becuase we may have int8_t signal with
+        # value of 100, with an offset of -200 which will roll over and produce incorrect result
+        if signal_is_float:
+            cast = ""
+        else:
+            cast = "(int64_t)"
+
         raw_sig_code = ""
         min_max_comment = ""
         if signal.minimum is None and signal.maximum is None:
-            raw_sig_code = "  {0} = ((uint64_t)(((message->{1} - ({2})) / {3}f) + 0.5f))".format(
-                raw_sig_name, signal.name, signal.offset, signal.scale
+            raw_sig_code = "  {0} = ((uint64_t)((({1}message->{2} - ({3})) / {4}f) + 0.5f))".format(
+                raw_sig_name, cast, signal.name, signal.offset, signal.scale
             )
         else:
             min_max_comment = " within range of [{0} -> {1}]".format(signal.minimum, signal.maximum)
 
-            # Cast to int64_t or higher type may be required becuase we may have int8_t signal with
-            # value of 100, with an offset of -200 which will roll over and produce incorrect result
-            if self._get_signal_type(signal) == "float":
-                cast = ""
-            else:
-                cast = "(int64_t)"
+            # When using MIN_OF/MAX_OF macros, we need to use 'f' notation to explicitly use float rather than double
+            minimum = str(signal.minimum) + 'f' if signal_is_float else str(signal.minimum)
+            maximum = str(signal.maximum) + 'f' if signal_is_float else str(signal.maximum)
+            minimum = minimum.replace("0f", "0.0f")
+            maximum = maximum.replace("0f", "0.0f")
 
             raw_sig_code = "  {0} = ((uint64_t)(((MAX_OF(MIN_OF({1}message->{2},{3}),{4}) - ({5})) / {6}f) + 0.5f))".format(
-                raw_sig_name, cast, signal.name, signal.maximum, signal.minimum, signal.offset, signal.scale
+                raw_sig_name, cast, signal.name, maximum, minimum, signal.offset, signal.scale
             )
 
         offset_string = ""
@@ -369,7 +379,7 @@ class CodeWriter(object):
 
     def _mia_methods(self):
         for message in self._messages:
-            self._stream.write("bool dbc_service_mia_{0}(dbc_{0}_s *message, const uint32_t increment_mia_by) {{\n"
+            self._stream.write("static inline bool dbc_service_mia_{0}(dbc_{0}_s *message, const uint32_t increment_mia_by) {{\n"
                                "  bool message_just_entered_mia = false;\n"
                                "\n"
                                "  if (message->mia_info.mia_counter >= dbc_mia_threshold_{0}) {{\n"
