@@ -52,8 +52,8 @@ static const dbc_message_header_t dbc_header_SENSOR_SONARS                      
 static const dbc_message_header_t dbc_header_DBC_TEST4                           = {      503U, 8 };
 
 /**
- * DBC_TEST1: 
- *   Sent by 'IO' 
+ * DBC_TEST1: Sent by 'IO'
+ *   - Expected every 100 ms
  */
 typedef struct {
   dbc_mia_info_t mia_info;
@@ -66,8 +66,7 @@ typedef struct {
 } dbc_DBC_TEST1_s;
 
 /**
- * DBC_TEST2: 
- *   Sent by 'IO' 
+ * DBC_TEST2: Sent by 'IO'
  */
 typedef struct {
   dbc_mia_info_t mia_info;
@@ -79,8 +78,7 @@ typedef struct {
 } dbc_DBC_TEST2_s;
 
 /**
- * DBC_TEST3: 
- *   Sent by 'IO' 
+ * DBC_TEST3: Sent by 'IO'
  */
 typedef struct {
   dbc_mia_info_t mia_info;
@@ -90,8 +88,9 @@ typedef struct {
 } dbc_DBC_TEST3_s;
 
 /**
- * DRIVER_HEARTBEAT: 
- *   Sent by 'DRIVER' 
+ * DRIVER_HEARTBEAT: Sent by 'DRIVER'
+ *   - Sync message used to synchronize the controllers
+ *   - Expected every 1000 ms
  */
 typedef struct {
   dbc_mia_info_t mia_info;
@@ -100,8 +99,8 @@ typedef struct {
 } dbc_DRIVER_HEARTBEAT_s;
 
 /**
- * MOTOR_CMD: 
- *   Sent by 'DRIVER' 
+ * MOTOR_CMD: Sent by 'DRIVER'
+ *   - Expected every 100 ms
  */
 typedef struct {
   dbc_mia_info_t mia_info;
@@ -111,19 +110,19 @@ typedef struct {
 } dbc_MOTOR_CMD_s;
 
 /**
- * MOTOR_STATUS: 
- *   Sent by 'MOTOR' 
+ * MOTOR_STATUS: Sent by 'MOTOR'
+ *   - Expected every 100 ms
  */
 typedef struct {
   dbc_mia_info_t mia_info;
 
   uint8_t MOTOR_STATUS_wheel_error;
-  float MOTOR_STATUS_speed_kph; //  unit: kph
+  float MOTOR_STATUS_speed_kph; // unit: kph
 } dbc_MOTOR_STATUS_s;
 
 /**
- * SENSOR_SONARS: 
- *   Sent by 'SENSOR' 
+ * SENSOR_SONARS: Sent by 'SENSOR'
+ *   - Expected every 100 ms
  */
 typedef struct {
   dbc_mia_info_t mia_info;
@@ -143,8 +142,7 @@ typedef struct {
 } dbc_SENSOR_SONARS_s;
 
 /**
- * DBC_TEST4: 
- *   Sent by 'IO' 
+ * DBC_TEST4: Sent by 'IO'
  */
 typedef struct {
   dbc_mia_info_t mia_info;
@@ -171,13 +169,13 @@ extern const uint32_t dbc_mia_threshold_DBC_TEST4;
 // User must define these externed instances in their code to use MIA functions
 // These are copied during dbc_service_mia_*() when message MIA timeout occurs
 // -----------------------------------------------------------------------------
-extern const dbc_DBC_TEST1_s            dbc_mia_replacement_DBC_TEST1;
+extern const dbc_DBC_TEST1_s            dbc_mia_replacement_DBC_TEST1; // Suggested MIA threshold: (3*100)
 extern const dbc_DBC_TEST2_s            dbc_mia_replacement_DBC_TEST2;
 extern const dbc_DBC_TEST3_s            dbc_mia_replacement_DBC_TEST3;
-extern const dbc_DRIVER_HEARTBEAT_s     dbc_mia_replacement_DRIVER_HEARTBEAT;
-extern const dbc_MOTOR_CMD_s            dbc_mia_replacement_MOTOR_CMD;
-extern const dbc_MOTOR_STATUS_s         dbc_mia_replacement_MOTOR_STATUS;
-extern const dbc_SENSOR_SONARS_s        dbc_mia_replacement_SENSOR_SONARS;
+extern const dbc_DRIVER_HEARTBEAT_s     dbc_mia_replacement_DRIVER_HEARTBEAT; // Suggested MIA threshold: (3*1000)
+extern const dbc_MOTOR_CMD_s            dbc_mia_replacement_MOTOR_CMD; // Suggested MIA threshold: (3*100)
+extern const dbc_MOTOR_STATUS_s         dbc_mia_replacement_MOTOR_STATUS; // Suggested MIA threshold: (3*100)
+extern const dbc_SENSOR_SONARS_s        dbc_mia_replacement_SENSOR_SONARS; // Suggested MIA threshold: (3*100)
 extern const dbc_DBC_TEST4_s            dbc_mia_replacement_DBC_TEST4;
 
 
