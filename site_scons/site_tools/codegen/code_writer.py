@@ -100,8 +100,9 @@ class CodeWriter(object):
         self._stream.write("// These are copied during dbc_service_mia_*() when message MIA timeout occurs\n")
         self._stream.write(line)
         for message in self._dbc.messages:
+            suggested_mia_time = "" if message.cycle_time is None else (" // Suggested MIA threshold: (3*{0})".format(message.cycle_time))
             self._stream.write(("extern const dbc_{0}_s ".format(message.name)).ljust(40))
-            self._stream.write("dbc_mia_replacement_{0};\n".format(message.name))
+            self._stream.write("dbc_mia_replacement_{0};{1}\n".format(message.name, suggested_mia_time))
 
         self._stream.write("\n")
 
@@ -146,18 +147,19 @@ class CodeWriter(object):
 
             # MIA only makes sense for messages we receive, and not the messages we send
             mia = "  dbc_mia_info_t mia_info;\n"
+            comment = "" if message.comment is None else ("\n *   - "+message.comment)
+            cycle_time = "" if message.cycle_time is None else ("\n *   - Expected every {0} ms".format(message.cycle_time))
 
             self._stream.write((
                 "\n"
                 "/**\n"
-                " * {0}: \n"
-                " *   Sent by '{1}' {2}\n"
+                " * {0}: Sent by '{1}'{2}{3}{4}\n"
                 " */\n"
                 "typedef struct {{\n"
-                "{3}"
+                "{5}"
                 "\n"
-                "{4}}} dbc_{0}_s;\n"
-            ).format(message.name, message.senders[0], message_layout, mia, signal_members))
+                "{6}}} dbc_{0}_s;\n"
+            ).format(message.name, message.senders[0], comment, message_layout, cycle_time, mia, signal_members))
 
     def _decode_methods(self):
         for message in self._dbc.messages:
@@ -429,7 +431,7 @@ class CodeWriter(object):
                 comment = "" if signal.comment is None else signal.comment
                 comment += "" if signal.unit is None else (" unit: " + signal.unit)
                 if len(comment) > 0:
-                    comment = ' // ' + comment
+                    comment = (' // ' + comment).replace('  ', ' ')
 
                 signals_string += "  {0};{1}\n".format(type_and_name, comment)
         else:
