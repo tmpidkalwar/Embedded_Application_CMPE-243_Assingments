@@ -1,6 +1,60 @@
-## General Information
+## Project Documentation
 
-### Floating point
+This is the documentation of everything relevant to this folder, which does quite a few things:
+
+* Run unit-tests based on C Unity Framework
+* Generate code from the DBC file
+* If all goes well above, then compile sources for the ARM processor
+
+
+----
+
+## Unit Tests
+
+The unit-tests operate as follows:
+
+* Sources from the `test` folders are obtained, and are compiled
+  * Note that sources inside of `test` is not compiled for the ARM processor
+* Each `test_<filename>.c` is a separate executable
+  * Mocks are generated based on the `#include`'d files
+  * The `test_<filename>.c` is like a "makefile", all includes are built, and mock includes are mocked
+* If there is a header file you wish to replace entirely, then put them inside `unittest_header_overrides` folder
+  * The unit-test framework will look at this folder first before it searches anywhere else
+
+Good references for unit-tests:
+
+* Test `static` methods of a source file
+  * Simply `#include` the `*.c` file rather than `*.h` file
+  * Check `test_periodic_scheduler.c` file (Hit Ctrl+P in VS Code)
+
+
+----
+
+## DBC code generation
+
+DBC file is the documentation of the bits and bytes on the CAN bus (SJSU class CmpE243). Users can define their communication protocol, and C code is generated from this file that can be used to send and receive data on the CAN bus.
+
+Here is the process:
+
+* `*.dbc` file is located in the `lpc_*` project
+  * This means that you can rename `project.dbc` to anything, such as `cmpe243.dbc`
+* Custom code generater is used that is built on top of "CAN Tools" (open source software)
+* Code is generated at your respective build directory, such as `_build_lpc40xx_freertos/auto_generated` folder
+
+Whichever file (such as `main.c`) needs the generated code, simply `#include "project.h"` and then you should be able to use the generated code.
+
+An important aspect of code generation is that you should not have an API that is not relevant for your CAN node. So if you are the DRIVER CAN node, then you should not have functions that are related to sending sensor values of the SENSOR CAN node. To generate code for a specific CAN node, you can use the `--dbc-node-name=<NODE NAME>` syntax.
+
+* scons `--dbc-node-name=<node name>`
+* Example: `scons --dbc-node-name=MOTOR`
+* Example: `scons --dbc-node-name=MOTOR -j4 --project=lpc40xx_freertos`
+* This ensures that you will not generate any code that is not relevant for your CAN node
+* The default behavior is that code is generated for "ALL" nodes, which is not something you should do and should be used for purely test purposes only. Another positive side effect is that when the DBC gets bigger, you want to read the code that is only relevant for yourself.
+
+
+----
+
+## Floating point
 
 `float` is an IEEE single precision 32-bit floating point number. The Cortex-M4 has hardware support for this data type, and math operations involving this data type will be very fast.
 
@@ -22,6 +76,7 @@ Same example with double that uses software routine `__aeabi_dmul()` to multiply
     16d8:	f002 ff60 	bl	459c <__aeabi_dmul>
     16dc:	e9cd 0104 	strd	r0, r1, [sp, #16]
 ```
+
 
 ----
 
