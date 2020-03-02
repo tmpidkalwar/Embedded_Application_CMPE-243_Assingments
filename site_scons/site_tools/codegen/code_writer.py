@@ -488,3 +488,14 @@ class CodeWriter(object):
 
     def _message_is_relevant(self, message):
         return (message.senders[0].upper() == self._dbc_node_name.upper()) or (GENERATE_ALL_NODE_NAME == self._dbc_node_name.upper())
+
+    """
+    Accessors
+    """
+    @property
+    def dbc_filepath(self):
+        return self._dbc_filepath
+
+    @property
+    def dbc_node_name(self):
+        return self._dbc_node_name

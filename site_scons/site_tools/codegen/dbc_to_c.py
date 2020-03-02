@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 import os
 import sys
 
-from code_writer import CodeWriter
+from code_writer import CodeWriter, GENERATE_ALL_NODE_NAME
 
 
 def get_args():
@@ -21,7 +21,7 @@ def get_args():
     )
     arg_parser.add_argument(
         "--dbc-node-name",
-        required=True,
+        default=GENERATE_ALL_NODE_NAME,
     )
     return arg_parser.parse_args()
 
@@ -49,6 +49,13 @@ def main():
             output_filepath = output
 
     code_writer = CodeWriter(dbc_filepath, dbc_node_name)
+
+    print("Generating code [{}] -> [{}] using node [{}]".format(
+            os.path.basename(dbc_filepath),
+            os.path.basename(output_filepath),
+            dbc_node_name,
+        )
+    )
 
     if not print_only:
         if not os.path.isdir(os.path.dirname(output_filepath)):

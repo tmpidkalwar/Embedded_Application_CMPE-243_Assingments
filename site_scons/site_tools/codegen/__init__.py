@@ -25,7 +25,7 @@ def exists(env):
     return True
 
 
-def database_code_generator_method(env, source, target):
+def database_code_generator_method(env, source, target, node_name=None):
     target = Dir(target)
 
     database_filenodes = []
@@ -43,16 +43,21 @@ def database_code_generator_method(env, source, target):
 
     error = 0
     for filenode in database_filenodes:
+        basename, _ = os.path.splitext(filenode.name)
+        output_filenode = target.File("{}.{}".format(basename, "h"))
+
         command = [
             "python",
             DBC_TO_C_PY.abspath,
-            "--dbc={}".format(filenode.abspath),
-            "--output={}".format(target),
+            "--dbc=$SOURCE",
+            "--output=$TARGET",
         ]
-        print(" ".join(command))
-        error = subprocess.call(command, shell=True)
-        if error:
-            print("Failed to generate code using file: [{}]".format(filenode.name))
-            sys.exit(1)
 
-    return error
+        if node_name is not None:
+            command.append("--dbc-node-name={}".format(node_name))
+
+        command = " ".join(command)
+
+        result = env.Command(action=command, source=filenode.abspath, target=output_filenode)
+
+    return result
