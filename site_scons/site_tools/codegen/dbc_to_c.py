@@ -37,6 +37,7 @@ def main():
         print("Unable to find DBC file: [{}]".format(dbc_filepath))
         return 1  # Return early
 
+    output_filepath = ""
     if not print_only:
         basename, ext = os.path.splitext(os.path.basename(dbc_filepath))
         output_filename = "{}.h".format(basename)
