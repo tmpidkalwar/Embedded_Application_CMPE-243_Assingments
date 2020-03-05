@@ -63,7 +63,7 @@ extern "C" {
  * trace display will be affected. In that case, there will be warnings
  * (as User Events) from TzCtrl task, that monitors this.
  ******************************************************************************/
-#define TRC_CFG_SYMBOL_TABLE_SLOTS 40
+#define TRC_CFG_SYMBOL_TABLE_SLOTS 20
 
 /*******************************************************************************
  * Configuration Macro: TRC_CFG_SYMBOL_MAX_LENGTH
