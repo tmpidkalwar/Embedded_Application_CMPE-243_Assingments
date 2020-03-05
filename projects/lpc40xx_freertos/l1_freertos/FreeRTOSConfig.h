@@ -142,5 +142,9 @@ do {                                              \
  * SYSCALL interrupt priority needs to be higher than that
  */
 #if (0 == configMAX_SYSCALL_INTERRUPT_PRIORITY)
-  #error "configMAX_SYSCALL_INTERRUPT_PRIORITY must not be 0"
+#error "configMAX_SYSCALL_INTERRUPT_PRIORITY must not be 0"
+#endif
+
+#if (0 != configUSE_TRACE_FACILITY)
+#include "trcRecorder.h"
 #endif

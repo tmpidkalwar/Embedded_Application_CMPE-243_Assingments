@@ -6,6 +6,7 @@
 #include "sensors.h"
 #include "startup.h"
 #include "sys_time.h"
+#include "trcRecorder.h"
 
 extern void main(void);
 static void entry_point__halt(void);
@@ -19,6 +20,8 @@ void entry_point(void) {
   clock__initialize_system_clock_96mhz();
   sys_time__init(clock__get_peripheral_clock_hz());
 
+  vTraceEnable(TRC_INIT);
+
   // Peripherals init initializes UART and then we can print the crash report if applicable
   peripherals_init();
   entry_point__handle_crash_report();
@@ -28,6 +31,7 @@ void entry_point(void) {
   }
 
   printf("\n%s(): Entering main()\n", __FUNCTION__);
+  vTraceEnable(TRC_START);
   main();
   entry_point__halt();
 }

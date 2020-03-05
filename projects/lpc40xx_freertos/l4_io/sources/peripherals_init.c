@@ -18,12 +18,12 @@ void peripherals_init(void) {
   board_io__initialize();
   peripherals_init__startup_sequence();
 
+  // UART initialization is required in order to use <stdio.h> puts, printf() etc; @see system_calls.c
+  peripherals_init__uart0_init();
+
   const uint32_t spi_sd_max_speed_khz = 24 * 1000;
   ssp2__initialize(spi_sd_max_speed_khz);
   peripherals_init__mount_sd_card();
-
-  // UART initialization is required in order to use <stdio.h> puts, printf() etc; @see system_calls.c
-  peripherals_init__uart0_init();
 
   // UART is initialized, so we can now start using printf()
   const char *line = "--------------------------------------------------------------------------------";
@@ -47,9 +47,26 @@ static void peripherals_init__mount_sd_card(void) {
   const BYTE option_mount_later = 0; // Actually mounts later when the first file is accessed
   const TCHAR *default_drive = (const TCHAR *)"";
 
-  f_mount(&sd_card_drive, default_drive, option_mount_later);
-}
+  if (FR_OK == f_mount(&sd_card_drive, default_drive, !option_mount_later)) {
+    printf("SD card mounted successfully\n");
+  } else {
+    printf("WARNING: SD card could not be mounted\n");
+  }
 
+  FIL fil;
+  FRESULT result = 0;
+  if (FR_OK == (result = f_open(&fil, "startup.txt", FA_READ))) {
+    char line[100];
+
+    /* Read every line and display it */
+    while (f_gets(line, sizeof line, &fil)) {
+      printf("%s", line);
+    }
+    f_close(&fil);
+  } else {
+    printf("Warning: Failed to read startup file: %d\n", result);
+  }
+}
 static void peripherals_init__uart0_init(void) {
   // Do not do any bufferring for standard input otherwise getchar(), scanf() may not work
   setvbuf(stdin, 0, _IONBF, 0);

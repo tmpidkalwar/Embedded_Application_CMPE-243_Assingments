@@ -9,10 +9,13 @@
 typedef struct {
   /// Task uses vTaskDelayUntil() to carry out its periodic callback
   const TickType_t task_delay_in_ticks;
+
   /// This callback is invoked from the task
   periodic_callbacks_f callback;
+
   /// Incremented until task_delay_in_ticks and then task_finished_flag is checked for deadline
   TickType_t ticks_elapsed;
+
   /// After the callback() is invoked, this flag is set which is later checked by periodic_scheduler__task_monitor()
   volatile bool task_finished_flag;
 } periodic_scheduler_s;
