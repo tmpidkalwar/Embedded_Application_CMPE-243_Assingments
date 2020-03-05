@@ -105,14 +105,14 @@
 #define configGENERATE_RUN_TIME_STATS           1
 
 // If RTOS trace facility is enabled, then provide the high resolution timer API
-#if (0 != configUSE_TRACE_FACILITY)
+//#if (0 != configUSE_TRACE_FACILITY)
   extern uint32_t freertos_hooks__get_run_time_counter_value(void);
   extern void freertos_hooks__reset_run_time_stats(void);
 
   #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()  /* sys_init() is initialized before FreeRTOS starts */
   #define portGET_RUN_TIME_COUNTER_VALUE()          freertos_hooks__get_run_time_counter_value()
   #define portRESET_TIMER_FOR_RUN_TIME_STATS()      freertos_hooks__reset_run_time_stats()
-#endif
+//#endif
 
 /**
  * When FreeRTOS runs into an assertion that should never occur
@@ -145,6 +145,5 @@ do {                                              \
 #error "configMAX_SYSCALL_INTERRUPT_PRIORITY must not be 0"
 #endif
 
-#if (0 != configUSE_TRACE_FACILITY)
+// This should be included regardless of '#if (0 != configUSE_TRACE_FACILITY)'
 #include "trcRecorder.h"
-#endif

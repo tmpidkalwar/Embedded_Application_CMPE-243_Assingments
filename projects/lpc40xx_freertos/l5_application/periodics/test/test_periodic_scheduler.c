@@ -40,5 +40,5 @@ void test_periodic_scheduler__initialize(void) {
                               NULL, 0);
 
   periodic_callbacks__initialize_Expect();
-  periodic_scheduler__initialize(stack_size);
+  periodic_scheduler__initialize(stack_size, true);
 }

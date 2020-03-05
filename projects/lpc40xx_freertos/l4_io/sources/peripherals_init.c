@@ -10,7 +10,7 @@
 #include "uart.h"
 
 static void peripherals_init__startup_sequence(void);
-static void peripherals_init__mount_sd_card(void);
+static const char *peripherals_init__mount_sd_card(void);
 static void peripherals_init__uart0_init(void);
 static void peripherals_init__i2c_init(void);
 
@@ -23,11 +23,11 @@ void peripherals_init(void) {
 
   const uint32_t spi_sd_max_speed_khz = 24 * 1000;
   ssp2__initialize(spi_sd_max_speed_khz);
-  peripherals_init__mount_sd_card();
+  const char *mount_info = peripherals_init__mount_sd_card();
 
   // UART is initialized, so we can now start using printf()
   const char *line = "--------------------------------------------------------------------------------";
-  printf("\n%s\n%s(): Low level startup\n", line, __FUNCTION__);
+  printf("\n%s\n%s(): Low level startup\n%s\n", line, __FUNCTION__, mount_info);
 
   peripherals_init__i2c_init();
 }
@@ -40,17 +40,18 @@ static void peripherals_init__startup_sequence(void) {
   }
 }
 
-static void peripherals_init__mount_sd_card(void) {
+static const char *peripherals_init__mount_sd_card(void) {
   // This FATFS object should never go out of scope
   static FATFS sd_card_drive;
+  const char *mount_info = "";
 
-  const BYTE option_mount_later = 0; // Actually mounts later when the first file is accessed
+  const BYTE option_mount_now = 1;
   const TCHAR *default_drive = (const TCHAR *)"";
 
-  if (FR_OK == f_mount(&sd_card_drive, default_drive, !option_mount_later)) {
-    printf("SD card mounted successfully\n");
+  if (FR_OK == f_mount(&sd_card_drive, default_drive, option_mount_now)) {
+    mount_info = ("SD card mounted successfully\n");
   } else {
-    printf("WARNING: SD card could not be mounted\n");
+    mount_info = ("WARNING: SD card could not be mounted\n");
   }
 
   FIL fil;
@@ -63,10 +64,11 @@ static void peripherals_init__mount_sd_card(void) {
       printf("%s", line);
     }
     f_close(&fil);
-  } else {
-    printf("Warning: Failed to read startup file: %d\n", result);
   }
+
+  return mount_info;
 }
+
 static void peripherals_init__uart0_init(void) {
   // Do not do any bufferring for standard input otherwise getchar(), scanf() may not work
   setvbuf(stdin, 0, _IONBF, 0);

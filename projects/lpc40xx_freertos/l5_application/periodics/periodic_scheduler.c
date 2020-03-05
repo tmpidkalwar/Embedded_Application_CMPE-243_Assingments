@@ -26,6 +26,8 @@ static periodic_scheduler_s periodic_scheduler__10Hz = {100, periodic_callbacks_
 static periodic_scheduler_s periodic_scheduler__100Hz = {10, periodic_callbacks__100Hz};
 static periodic_scheduler_s periodic_scheduler__1000Hz = {1, periodic_callbacks__1000Hz};
 
+static bool periodic_scheduler__run_1000hz;
+
 /// Common task runner for each periodic task
 static void periodic_scheduler__run(periodic_scheduler_s *periodic) {
   TickType_t previous_tick = 0;
@@ -63,18 +65,26 @@ static void periodic_scheduler__task_monitor(void *param) {
   // We let all the other tasks run first, and then check their flags
   while (true) {
     vTaskDelay(1);
-    periodic_scheduler__check_flag(&periodic_scheduler__1000Hz);
+
+    if (periodic_scheduler__run_1000hz) {
+      periodic_scheduler__check_flag(&periodic_scheduler__1000Hz);
+    }
+
     periodic_scheduler__check_flag(&periodic_scheduler__100Hz);
     periodic_scheduler__check_flag(&periodic_scheduler__10Hz);
     periodic_scheduler__check_flag(&periodic_scheduler__1Hz);
   }
 }
 
-void periodic_scheduler__initialize(uint32_t task_stack_size) {
+void periodic_scheduler__initialize(uint32_t task_stack_size, bool run_1000hz) {
   xTaskCreate(periodic_scheduler__1Hz_task, "1Hz", task_stack_size, NULL, PRIORITY_PERIODIC_1HZ, NULL);
   xTaskCreate(periodic_scheduler__10Hz_task, "10Hz", task_stack_size, NULL, PRIORITY_PERIODIC_10HZ, NULL);
   xTaskCreate(periodic_scheduler__100Hz_task, "100Hz", task_stack_size, NULL, PRIORITY_PERIODIC_100HZ, NULL);
-  xTaskCreate(periodic_scheduler__1000Hz_task, "1000Hz", task_stack_size, NULL, PRIORITY_PERIODIC_1000HZ, NULL);
+
+  periodic_scheduler__run_1000hz = run_1000hz;
+  if (periodic_scheduler__run_1000hz) {
+    xTaskCreate(periodic_scheduler__1000Hz_task, "1000Hz", task_stack_size, NULL, PRIORITY_PERIODIC_1000HZ, NULL);
+  }
 
   xTaskCreate(periodic_scheduler__task_monitor, "xHz", task_stack_size, NULL, PRIORITY_PERIODIC_MONITOR, NULL);
 

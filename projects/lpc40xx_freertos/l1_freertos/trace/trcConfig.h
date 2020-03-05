@@ -127,7 +127,7 @@ extern "C" {
  *
  * Default value is 0 (= include additional events).
  ******************************************************************************/
-#define TRC_CFG_SCHEDULING_ONLY 1
+#define TRC_CFG_SCHEDULING_ONLY 0
 
 /******************************************************************************
  * TRC_CFG_INCLUDE_MEMMANG_EVENTS
@@ -139,7 +139,7 @@ extern "C" {
  *
  * Default value is 1.
  *****************************************************************************/
-#define TRC_CFG_INCLUDE_MEMMANG_EVENTS 0
+#define TRC_CFG_INCLUDE_MEMMANG_EVENTS 1
 
 /******************************************************************************
  * TRC_CFG_INCLUDE_USER_EVENTS
@@ -164,7 +164,7 @@ extern "C" {
  *
  * Default value is 1.
  *****************************************************************************/
-#define TRC_CFG_INCLUDE_USER_EVENTS 0
+#define TRC_CFG_INCLUDE_USER_EVENTS 1
 
 /*****************************************************************************
  * TRC_CFG_INCLUDE_ISR_TRACING
@@ -186,7 +186,7 @@ extern "C" {
  * Note: tracing ISRs requires that you insert calls to vTraceStoreISRBegin
  * and vTraceStoreISREnd in your interrupt handlers.
  *****************************************************************************/
-#define TRC_CFG_INCLUDE_ISR_TRACING 0
+#define TRC_CFG_INCLUDE_ISR_TRACING 1
 
 /*****************************************************************************
  * TRC_CFG_INCLUDE_READY_EVENTS
@@ -284,7 +284,7 @@ extern "C" {
  *
  * Default value is 10.
  *****************************************************************************/
-#define TRC_CFG_STACK_MONITOR_MAX_TASKS 10
+#define TRC_CFG_STACK_MONITOR_MAX_TASKS 8
 
 /******************************************************************************
  * TRC_CFG_STACK_MONITOR_MAX_REPORTS
@@ -336,7 +336,7 @@ extern "C" {
  * increases the CPU load of TzCtrl somewhat, but may improve the performance of
  * of the trace streaming, especially if the trace buffer is small.
  ******************************************************************************/
-#define TRC_CFG_CTRL_TASK_DELAY 10
+#define TRC_CFG_CTRL_TASK_DELAY 25
 
 /*******************************************************************************
  * Configuration Macro: TRC_CFG_CTRL_TASK_STACK_SIZE

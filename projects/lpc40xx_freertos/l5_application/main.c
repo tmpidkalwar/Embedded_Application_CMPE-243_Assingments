@@ -39,8 +39,10 @@ static void create_blinky_tasks(void) {
   xTaskCreate(blink_task, "led0", configMINIMAL_STACK_SIZE, (void *)&led0, PRIORITY_LOW, NULL);
   xTaskCreate(blink_task, "led1", configMINIMAL_STACK_SIZE, (void *)&led1, PRIORITY_LOW, NULL);
 #else
-  const size_t stack_size_bytes = 2048 / sizeof(void *);
-  periodic_scheduler__initialize(stack_size_bytes);
+  const bool run_1000hz = true;                          // Assuming we do not need the high rate 1000Hz task
+  const size_t stack_size_bytes = 2048 / sizeof(void *); // RTOS stack size is in terms of 32-bits for ARM M4 32-bit CPU
+
+  periodic_scheduler__initialize(stack_size_bytes, !run_1000hz);
   UNUSED(blink_task);
 #endif
 }

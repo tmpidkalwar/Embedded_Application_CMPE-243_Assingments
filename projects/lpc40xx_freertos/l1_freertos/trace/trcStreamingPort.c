@@ -54,24 +54,12 @@
 #if (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_STREAMING)
 #if (TRC_USE_TRACEALYZER_RECORDER == 1)
 
-// FILE *traceFile = NULL;
 static size_t page_number;
 static FIL trace_file;
 
+// Open is called when our SPI is not even initialized so we do not open a file here
 void openFile(char *fileName) {
 
-  // if (traceFile == NULL)
-  // {
-  // 	errno_t err = fopen_s(&traceFile, fileName, "wb");
-  // 	if (err != 0)
-  // 	{
-  // 		printf("Could not open trace file, error code %d.\n", err);
-  // 		exit(-1);
-  // 	}
-  // 	else {
-  // 		printf("Trace file created.\n");
-  // 	}
-  // }
 }
 
 int32_t writeToFile(void *data, uint32_t size, int32_t *ptrBytesWritten) {
@@ -79,9 +67,9 @@ int32_t writeToFile(void *data, uint32_t size, int32_t *ptrBytesWritten) {
 
   if (0 == page_number) {
     if (FR_OK == f_open(&trace_file, "trace.psf", (FA_WRITE | FA_CREATE_ALWAYS))) {
-      printf("  --> Opened trace file\n");
+      printf("  --> RTOS trace: Opened trace.psf on your SD card\n");
     } else {
-      printf("  --> Failed to open trace file\n");
+      printf("  --> RTOS trace: Failed to open trace.psf on your SD card\n");
     }
   }
   ++page_number;
@@ -91,43 +79,18 @@ int32_t writeToFile(void *data, uint32_t size, int32_t *ptrBytesWritten) {
 
   if (FR_OK == (result = f_write(&trace_file, data, size, &bytes_written))) {
     status = 0;
-    printf(" == Successful write %d: %ld bytes\n", page_number, size);
     f_sync(&trace_file);
   } else {
-    fprintf(stderr, "Failed to write page %d, error %d\n", page_number, result);
+    fprintf(stderr, "RTOS trace: Failed to write page %d, error %d\n", page_number, result);
   }
 
   *ptrBytesWritten = bytes_written;
   return status;
-  // int32_t written = 0;
-  // if (traceFile != NULL)
-  // {
-  // 	written = fwrite(data, 1, size, traceFile);
-  // }
-  // else
-  // {
-  // 	written = 0;
-  // }
-
-  // if (ptrBytesWritten != 0)
-  // 	*ptrBytesWritten = written;
-
-  // if ((int32_t)size == written)
-  // 	return 0;
-  // else
-  // 	return -1;
 }
 
 void closeFile(void) {
-  printf("Close trace file\n");
+  printf("RTOS trace: Closed trace file\n");
   f_close(&trace_file);
-
-  // if (traceFile != NULL)
-  // {
-  // 	fclose(traceFile);
-  // 	traceFile = NULL;
-  // 	printf("Trace file closed.\n");
-  // }
 }
 
 #endif /*(TRC_USE_TRACEALYZER_RECORDER == 1)*/
