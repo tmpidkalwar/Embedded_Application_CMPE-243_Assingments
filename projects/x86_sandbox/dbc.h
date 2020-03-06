@@ -17,10 +17,10 @@
 /**
  * Extern dependency to use dbc_encode_and_send_*() API
  * This is designed such that the generated code does not depend on your CAN driver
- * @param argument is a pass through argument from dbc_encode_and_send_*()
+ * @param argument_from_dbc_encode_and_send is a pass through argument from dbc_encode_and_send_*()
  * @returns the value returned from is returned from dbc_encode_and_send_*()
  */
-extern bool dbc_send_can_message(void * argument, uint32_t message_id, const uint8_t bytes[8], uint8_t dlc);
+extern bool dbc_send_can_message(void * argument_from_dbc_encode_and_send, uint32_t message_id, const uint8_t bytes[8], uint8_t dlc);
 
 /// Missing in Action (MIA) structure
 typedef struct {
@@ -219,7 +219,7 @@ static inline dbc_message_header_t dbc_encode_DBC_TEST1(uint8_t bytes[8], const 
   return dbc_header_DBC_TEST1;
 }
 
-/// @see dbc_encode_DBC_TEST1(); This is its variant to encode and call dbc_send_can_message() to send the message
+/// @see dbc_encode_DBC_TEST1(); this is its variant to encode and call dbc_send_can_message() to send the message
 static inline bool dbc_encode_and_send_DBC_TEST1(void *argument_for_dbc_send_can_message, const dbc_DBC_TEST1_s *message) {
   uint8_t bytes[8];
   const dbc_message_header_t header = dbc_encode_DBC_TEST1(bytes, message);
@@ -260,7 +260,7 @@ static inline dbc_message_header_t dbc_encode_DBC_TEST2(uint8_t bytes[8], const 
   return dbc_header_DBC_TEST2;
 }
 
-/// @see dbc_encode_DBC_TEST2(); This is its variant to encode and call dbc_send_can_message() to send the message
+/// @see dbc_encode_DBC_TEST2(); this is its variant to encode and call dbc_send_can_message() to send the message
 static inline bool dbc_encode_and_send_DBC_TEST2(void *argument_for_dbc_send_can_message, const dbc_DBC_TEST2_s *message) {
   uint8_t bytes[8];
   const dbc_message_header_t header = dbc_encode_DBC_TEST2(bytes, message);
@@ -286,7 +286,7 @@ static inline dbc_message_header_t dbc_encode_DBC_TEST3(uint8_t bytes[8], const 
   return dbc_header_DBC_TEST3;
 }
 
-/// @see dbc_encode_DBC_TEST3(); This is its variant to encode and call dbc_send_can_message() to send the message
+/// @see dbc_encode_DBC_TEST3(); this is its variant to encode and call dbc_send_can_message() to send the message
 static inline bool dbc_encode_and_send_DBC_TEST3(void *argument_for_dbc_send_can_message, const dbc_DBC_TEST3_s *message) {
   uint8_t bytes[8];
   const dbc_message_header_t header = dbc_encode_DBC_TEST3(bytes, message);
@@ -308,7 +308,7 @@ static inline dbc_message_header_t dbc_encode_DRIVER_HEARTBEAT(uint8_t bytes[8],
   return dbc_header_DRIVER_HEARTBEAT;
 }
 
-/// @see dbc_encode_DRIVER_HEARTBEAT(); This is its variant to encode and call dbc_send_can_message() to send the message
+/// @see dbc_encode_DRIVER_HEARTBEAT(); this is its variant to encode and call dbc_send_can_message() to send the message
 static inline bool dbc_encode_and_send_DRIVER_HEARTBEAT(void *argument_for_dbc_send_can_message, const dbc_DRIVER_HEARTBEAT_s *message) {
   uint8_t bytes[8];
   const dbc_message_header_t header = dbc_encode_DRIVER_HEARTBEAT(bytes, message);
@@ -334,7 +334,7 @@ static inline dbc_message_header_t dbc_encode_MOTOR_CMD(uint8_t bytes[8], const 
   return dbc_header_MOTOR_CMD;
 }
 
-/// @see dbc_encode_MOTOR_CMD(); This is its variant to encode and call dbc_send_can_message() to send the message
+/// @see dbc_encode_MOTOR_CMD(); this is its variant to encode and call dbc_send_can_message() to send the message
 static inline bool dbc_encode_and_send_MOTOR_CMD(void *argument_for_dbc_send_can_message, const dbc_MOTOR_CMD_s *message) {
   uint8_t bytes[8];
   const dbc_message_header_t header = dbc_encode_MOTOR_CMD(bytes, message);
@@ -361,7 +361,7 @@ static inline dbc_message_header_t dbc_encode_MOTOR_STATUS(uint8_t bytes[8], con
   return dbc_header_MOTOR_STATUS;
 }
 
-/// @see dbc_encode_MOTOR_STATUS(); This is its variant to encode and call dbc_send_can_message() to send the message
+/// @see dbc_encode_MOTOR_STATUS(); this is its variant to encode and call dbc_send_can_message() to send the message
 static inline bool dbc_encode_and_send_MOTOR_STATUS(void *argument_for_dbc_send_can_message, const dbc_MOTOR_STATUS_s *message) {
   uint8_t bytes[8];
   const dbc_message_header_t header = dbc_encode_MOTOR_STATUS(bytes, message);
@@ -382,7 +382,7 @@ static inline dbc_message_header_t dbc_encode_SENSOR_SONARS(uint8_t bytes[8], co
   return dbc_header_SENSOR_SONARS;
 }
 
-/// @see dbc_encode_SENSOR_SONARS(); This is its variant to encode and call dbc_send_can_message() to send the message
+/// @see dbc_encode_SENSOR_SONARS(); this is its variant to encode and call dbc_send_can_message() to send the message
 static inline bool dbc_encode_and_send_SENSOR_SONARS(void *argument_for_dbc_send_can_message, const dbc_SENSOR_SONARS_s *message) {
   uint8_t bytes[8];
   const dbc_message_header_t header = dbc_encode_SENSOR_SONARS(bytes, message);
@@ -417,7 +417,7 @@ static inline dbc_message_header_t dbc_encode_DBC_TEST4(uint8_t bytes[8], const 
   return dbc_header_DBC_TEST4;
 }
 
-/// @see dbc_encode_DBC_TEST4(); This is its variant to encode and call dbc_send_can_message() to send the message
+/// @see dbc_encode_DBC_TEST4(); this is its variant to encode and call dbc_send_can_message() to send the message
 static inline bool dbc_encode_and_send_DBC_TEST4(void *argument_for_dbc_send_can_message, const dbc_DBC_TEST4_s *message) {
   uint8_t bytes[8];
   const dbc_message_header_t header = dbc_encode_DBC_TEST4(bytes, message);

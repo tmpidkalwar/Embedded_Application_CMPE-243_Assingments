@@ -64,10 +64,10 @@ class CodeWriter(object):
             "/**\n"
             " * Extern dependency to use dbc_encode_and_send_*() API\n"
             " * This is designed such that the generated code does not depend on your CAN driver\n"
-            " * @param argument is a pass through argument from dbc_encode_and_send_*()\n"
+            " * @param argument_from_dbc_encode_and_send is a pass through argument from dbc_encode_and_send_*()\n"
             " * @returns the value returned from is returned from dbc_encode_and_send_*()\n"
             " */\n"
-            "extern bool dbc_send_can_message(void * argument, uint32_t message_id, const uint8_t bytes[8], uint8_t dlc);\n"
+            "extern bool dbc_send_can_message(void * argument_from_dbc_encode_and_send, uint32_t message_id, const uint8_t bytes[8], uint8_t dlc);\n"
             "\n"
         ).format(dbc_filename))
 
@@ -302,7 +302,7 @@ class CodeWriter(object):
 
             self._stream.write((
                 "\n"
-                "/// @see dbc_encode_{0}(); This is its variant to encode and call dbc_send_can_message() to send the message\n"
+                "/// @see dbc_encode_{0}(); this is its variant to encode and call dbc_send_can_message() to send the message\n"
                 "static inline bool dbc_encode_and_send_{0}(void *argument_for_dbc_send_can_message, const dbc_{0}_s *message) {{\n"
                 "  uint8_t bytes[8];\n"
                 "  const dbc_message_header_t header = dbc_encode_{0}(bytes, message);\n"
