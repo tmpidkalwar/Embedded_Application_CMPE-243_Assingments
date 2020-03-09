@@ -63,7 +63,7 @@ extern "C" {
  * trace display will be affected. In that case, there will be warnings
  * (as User Events) from TzCtrl task, that monitors this.
  ******************************************************************************/
-#define TRC_CFG_SYMBOL_TABLE_SLOTS 20
+#define TRC_CFG_SYMBOL_TABLE_SLOTS 24
 
 /*******************************************************************************
  * Configuration Macro: TRC_CFG_SYMBOL_MAX_LENGTH
@@ -78,7 +78,7 @@ extern "C" {
  * which will affect the trace display. In that case, there will be warnings
  * (as User Events) from TzCtrl task, that monitors this.
  ******************************************************************************/
-#define TRC_CFG_SYMBOL_MAX_LENGTH 16
+#define TRC_CFG_SYMBOL_MAX_LENGTH 12
 
 /*******************************************************************************
  * Configuration Macro: TRC_CFG_OBJECT_DATA_SLOTS
@@ -97,7 +97,7 @@ extern "C" {
  *
  * Note: not used by the J-Link RTT stream port (see trcStreamingPort.h instead)
  ******************************************************************************/
-#define TRC_CFG_PAGED_EVENT_BUFFER_PAGE_COUNT (4)
+#define TRC_CFG_PAGED_EVENT_BUFFER_PAGE_COUNT (3)
 
 /*******************************************************************************
  * Configuration Macro: TRC_CFG_PAGED_EVENT_BUFFER_PAGE_SIZE
