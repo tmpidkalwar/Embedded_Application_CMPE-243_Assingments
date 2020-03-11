@@ -89,7 +89,7 @@ void periodic_scheduler__initialize(uint32_t task_stack_size, bool run_1000hz) {
     xTaskCreate(periodic_scheduler__1000Hz_task, "1000Hz", task_stack_size, NULL, PRIORITY_PERIODIC_1000HZ, NULL);
   }
 
-  xTaskCreate(periodic_scheduler__task_monitor, "xHz", task_stack_size, NULL, PRIORITY_PERIODIC_MONITOR, NULL);
+  xTaskCreate(periodic_scheduler__task_monitor, "Hz_wdt", task_stack_size, NULL, PRIORITY_PERIODIC_MONITOR, NULL);
 
   periodic_callbacks__initialize();
 }

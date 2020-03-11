@@ -15,7 +15,7 @@ typedef LPC_UART_TypeDef lpc_uart;
  */
 typedef struct {
   lpc_uart *registers;
-  const char *isr_trace_name;
+  const char *rtos_isr_trace_name;
   QueueHandle_t queue_transmit;
   QueueHandle_t queue_receive;
 } uart_s;
@@ -113,7 +113,7 @@ static bool uart__clear_receive_fifo(uart_s *uart_type) {
 
 static void uart__enable_receive_and_transmit_interrupts(uart_e uart) {
   uart_s *uart_type = &uarts[uart];
-  lpc_peripheral__enable_interrupt(uart_peripheral_ids[uart], uart__isrs[uart], uart_type->isr_trace_name);
+  lpc_peripheral__enable_interrupt(uart_peripheral_ids[uart], uart__isrs[uart], uart_type->rtos_isr_trace_name);
 
   const uint32_t enable_rx_tx_fifo = (1 << 0) | (1 << 6);
   const uint32_t reset_rx_tx_fifo = (1 << 1) | (1 << 2);

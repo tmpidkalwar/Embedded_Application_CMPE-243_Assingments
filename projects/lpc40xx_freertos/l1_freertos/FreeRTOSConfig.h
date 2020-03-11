@@ -101,7 +101,7 @@
 #define INCLUDE_eTaskGetState                   1
 
 // Enable CPU utilization API
-#define configUSE_TRACE_FACILITY                1
+#define configUSE_TRACE_FACILITY                0
 #define configGENERATE_RUN_TIME_STATS           1
 
 // If RTOS trace facility is enabled, then provide the high resolution timer API
