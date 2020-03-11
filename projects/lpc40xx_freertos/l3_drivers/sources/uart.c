@@ -208,12 +208,16 @@ bool uart__enable_queues(uart_e uart, QueueHandle_t queue_receive, QueueHandle_t
     // Ensure that the queues are not already enabled
     if (!uart__is_receive_queue_enabled(uart) && NULL != queue_receive) {
       uart_type->queue_receive = queue_receive;
-      vTraceSetQueueName(queue_receive, "U RXQ"); // TODO: should be unique
+      char name[] = "UxRXQ";
+      name[1] = '0' + (char)uart;
+      vTraceSetQueueName(queue_receive, name);
     }
 
     if (!uart__is_transmit_queue_enabled(uart) && NULL != queue_transmit) {
       uart_type->queue_transmit = queue_transmit;
-      vTraceSetQueueName(queue_transmit, "U TXQ"); // TODO: should be unique
+      char name[] = "UxTXQ";
+      name[1] = '0' + (char)uart;
+      vTraceSetQueueName(queue_transmit, name);
     }
 
     // Enable peripheral_id interrupt if all is well

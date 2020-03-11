@@ -54,18 +54,6 @@ static const char *peripherals_init__mount_sd_card(void) {
     mount_info = ("WARNING: SD card could not be mounted\n");
   }
 
-  FIL fil;
-  FRESULT result = 0;
-  if (FR_OK == (result = f_open(&fil, "startup.txt", FA_READ))) {
-    char line[100];
-
-    /* Read every line and display it */
-    while (f_gets(line, sizeof line, &fil)) {
-      printf("%s", line);
-    }
-    f_close(&fil);
-  }
-
   return mount_info;
 }
 

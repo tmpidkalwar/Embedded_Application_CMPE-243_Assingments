@@ -20,6 +20,10 @@ void entry_point(void) {
   clock__initialize_system_clock_96mhz();
   sys_time__init(clock__get_peripheral_clock_hz());
 
+  /* RTOS trace is an optional component enabled by the following macro at FreeRTOSConfig.h
+   *  - configUSE_TRACE_FACILITY
+   * We need to initialize the trace early before using ANY RTOS API
+   */
   vTraceEnable(TRC_INIT);
 
   // Peripherals init initializes UART and then we can print the crash report if applicable
@@ -30,9 +34,12 @@ void entry_point(void) {
     printf("\n%s(): WARNING: Sensor errors on this board\n", __FUNCTION__);
   }
 
-  printf("\n%s(): Entering main()\n", __FUNCTION__);
+  // If RTOS trace is compiled in (configUSE_TRACE_FACILITY) then enable it at this point before entering main()
   vTraceEnable(TRC_START);
+
+  printf("\n%s(): Entering main()\n", __FUNCTION__);
   main();
+
   entry_point__halt();
 }
 
