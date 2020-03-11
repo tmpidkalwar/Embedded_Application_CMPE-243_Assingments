@@ -54,9 +54,11 @@
 
 /**
  * Somewhat experimental f_write() functionality that writes aligned 4K buffer
- * to minimize the SD card write latency
+ * to minimize the SD card write latency.
+ *   - Set to 0 to disable it
+ *   - Set to size of aligned memory write for the SD card
  */
-#define ALIGN_FWRITE 0
+#define ALIGN_FWRITE (4 * 1024)
 
 #if (TRC_CFG_RECORDER_MODE == TRC_RECORDER_MODE_STREAMING)
 #if (TRC_USE_TRACEALYZER_RECORDER == 1)
@@ -65,51 +67,49 @@ static size_t page_number;
 static FIL trace_file;
 
 // Open is called when our SPI is not even initialized so we do not open a file here
-void openFile(char *fileName) {
-  if (FR_OK == f_open(&trace_file, "trace.psf", (FA_WRITE | FA_CREATE_ALWAYS))) {
+void openFile(char *file_name) {
+  if (FR_OK == f_open(&trace_file, file_name, (FA_WRITE | FA_CREATE_ALWAYS))) {
 #if 0
     const FSIZE_t preallocate_size = (64 * 1024 * 1024);
     const BYTE allocate_now = 1;
     f_expand(&trace_file, preallocate_size, allocate_now);
 #endif
     f_sync(&trace_file);
-    printf("  --> RTOS trace: Opened trace.psf on your SD card\n");
+    printf("  --> RTOS trace: Opened %s on your SD card\n", file_name);
   } else {
-    printf("  --> RTOS trace: Failed to open trace.psf on your SD card\n");
+    printf("  --> RTOS trace: Failed to open %s on your SD card\n", file_name);
   }
 }
 
-int32_t writeToFile(void *data, uint32_t data_size_in_bytes, int32_t *ptrBytesWritten) {
+int32_t writeToFile(void *data, uint32_t data_size_in_bytes, int32_t *num_of_bytes_written) {
   FRESULT result = FR_INVALID_PARAMETER;
   UINT bytes_written = 0;
 
 #if ALIGN_FWRITE
-  static uint8_t file_buffer[TRC_CFG_PAGED_EVENT_BUFFER_PAGE_SIZE];
-  static size_t bytes_used = 0;
+  static uint8_t file_buffer[ALIGN_FWRITE];
+  static size_t buffered_byte_count = 0;
 
-  const size_t available = sizeof(file_buffer) - bytes_used;                                        // 4096 - 4090 = 6
+  const size_t available = sizeof(file_buffer) - buffered_byte_count;                               // 4096 - 4090 = 6
   const size_t bytes_to_buffer = (data_size_in_bytes < available) ? data_size_in_bytes : available; // 6
-  const size_t remaining = (data_size_in_bytes - bytes_to_buffer);                                  // 4090 - 6
+  const size_t unbuffered_byte_count = (data_size_in_bytes - bytes_to_buffer);                      // 4090 - 6
 
-  // printf("----\nBuffer %d bytes\n", bytes_to_buffer);
-  memcpy((file_buffer + bytes_used), data, bytes_to_buffer); // copy 6
-  bytes_used += bytes_to_buffer;                             // 4096
+  memcpy((file_buffer + buffered_byte_count), data, bytes_to_buffer); // copy 6
+  buffered_byte_count += bytes_to_buffer;                             // 4096
 
-  if (bytes_used >= sizeof(file_buffer)) {
-    printf("  Wrote %d, remaining %d\n", bytes_used, remaining);
-    if (FR_OK == (result = f_write(&trace_file, file_buffer, bytes_used, &bytes_written))) {
+  if (buffered_byte_count >= sizeof(file_buffer)) {
+    if (FR_OK == (result = f_write(&trace_file, file_buffer, buffered_byte_count, &bytes_written))) {
       f_sync(&trace_file);
     } else {
       fprintf(stderr, "RTOS trace: Failed to write page %d, error %d\n", page_number, result);
     }
 
     ++page_number;
-    bytes_used = 0;
+    buffered_byte_count = 0;
   }
 
-  if (remaining > 0) {
-    memcpy(file_buffer, (data + bytes_to_buffer), remaining);
-    bytes_used += remaining;
+  if (unbuffered_byte_count > 0) {
+    memcpy(file_buffer, (data + bytes_to_buffer), unbuffered_byte_count);
+    buffered_byte_count += unbuffered_byte_count;
   }
 #else
   if (FR_OK == (result = f_write(&trace_file, data, data_size_in_bytes, &bytes_written))) {
@@ -119,7 +119,7 @@ int32_t writeToFile(void *data, uint32_t data_size_in_bytes, int32_t *ptrBytesWr
   }
 #endif
 
-  *ptrBytesWritten = data_size_in_bytes;
+  *num_of_bytes_written = data_size_in_bytes;
   return 0;
 }
 
