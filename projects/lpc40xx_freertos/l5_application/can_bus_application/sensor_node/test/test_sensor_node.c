@@ -8,7 +8,7 @@
 
 #include "tesla_model_rc.h"
 
-#include "can_bus_mia_configurations.c"
+#include "can_bus_configurations.h"
 
 #include "sensor_node.c"
 
@@ -26,36 +26,36 @@ void test_sensor_node__init(void) {
   sensor_node__init();
 }
 
-void test_sensor_node__send_sonar_over_can_succesfully(void) {
+void test_sensor_node__send_messages_over_can_succesfully(void) {
   dbc_SENSOR_SONARS_s sensor_struct = {0};
   sensor_node__is_sync = true;
 
   for (size_t number_of_ultrasonics = 0; number_of_ultrasonics < 4; number_of_ultrasonics++) {
     ultrasonic__get_fake_range_ExpectAndReturn(0);
   }
-
   can__tx_ExpectAndReturn(can1, NULL, 0, true);
   can__tx_IgnoreArg_can_message_ptr();
-  TEST_ASSERT_TRUE(sensor_node__send_sonars_over_can());
+
+  TEST_ASSERT_TRUE(sensor_node__send_messages_over_can());
 }
 
-void test_sensor_node__send_sonar_over_can_fail(void) {
+void test_sensor_node__send_messages_over_can_fail(void) {
   dbc_SENSOR_SONARS_s sensor_struct = {0};
   sensor_node__is_sync = true;
 
   for (size_t number_of_ultrasonics = 0; number_of_ultrasonics < 4; number_of_ultrasonics++) {
     ultrasonic__get_fake_range_ExpectAndReturn(0);
   }
-
   can__tx_ExpectAndReturn(can1, NULL, 0, false);
   can__tx_IgnoreArg_can_message_ptr();
-  TEST_ASSERT_FALSE(sensor_node__send_sonars_over_can());
+
+  TEST_ASSERT_FALSE(sensor_node__send_messages_over_can());
 }
 
-void test_sensor_node__send_sonar_over_can_sync_fail(void) {
+void test_sensor_node__send_messages_over_can_sync_fail(void) {
   dbc_SENSOR_SONARS_s sensor_struct = {0};
 
-  TEST_ASSERT_FALSE(sensor_node__send_sonars_over_can());
+  TEST_ASSERT_FALSE(sensor_node__send_messages_over_can());
 }
 
 void test_sensor_node__handle_mia(void) {

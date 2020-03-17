@@ -1,5 +1,3 @@
-#include "can_bus_mia_configurations.h"
-
 #include "can_bus.h"
 #include "tesla_model_rc.h"
 
