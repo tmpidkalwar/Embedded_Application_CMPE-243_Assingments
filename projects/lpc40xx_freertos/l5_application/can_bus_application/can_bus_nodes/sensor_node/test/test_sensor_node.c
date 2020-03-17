@@ -1,0 +1,105 @@
+#include "unity.h"
+
+#include "Mockboard_io.h"
+#include "Mockcan_bus.h"
+#include "Mockgpio.h"
+#include "Mockuart_printf.h"
+#include "Mockultrasonic.h"
+
+#include "tesla_model_rc.h"
+
+#include "can_bus_mia_configurations.c"
+
+#include "sensor_node.c"
+
+void setUp(void) {
+  sensor_node__is_sync = false;
+  memset(&can_msg__driver_heartbeat, 0, sizeof(can_msg__driver_heartbeat));
+}
+
+void tearDown(void) {}
+
+void test_sensor_node__init(void) {
+  ultrasonic_s ultrasonic = {0};
+  ultrasonic__initialize_Expect(&ultrasonic, GPIO__PORT_0, 7, GPIO__PORT_0, 6);
+
+  sensor_node__init();
+}
+
+void test_sensor_node__send_sonar_over_can_succesfully(void) {
+  dbc_SENSOR_SONARS_s sensor_struct = {0};
+  sensor_node__is_sync = true;
+
+  for (size_t number_of_ultrasonics = 0; number_of_ultrasonics < 4; number_of_ultrasonics++) {
+    ultrasonic__get_fake_range_ExpectAndReturn(0);
+  }
+
+  can__tx_ExpectAndReturn(can1, NULL, 0, true);
+  can__tx_IgnoreArg_can_message_ptr();
+  TEST_ASSERT_TRUE(sensor_node__send_sonars_over_can());
+}
+
+void test_sensor_node__send_sonar_over_can_fail(void) {
+  dbc_SENSOR_SONARS_s sensor_struct = {0};
+  sensor_node__is_sync = true;
+
+  for (size_t number_of_ultrasonics = 0; number_of_ultrasonics < 4; number_of_ultrasonics++) {
+    ultrasonic__get_fake_range_ExpectAndReturn(0);
+  }
+
+  can__tx_ExpectAndReturn(can1, NULL, 0, false);
+  can__tx_IgnoreArg_can_message_ptr();
+  TEST_ASSERT_FALSE(sensor_node__send_sonars_over_can());
+}
+
+void test_sensor_node__send_sonar_over_can_sync_fail(void) {
+  dbc_SENSOR_SONARS_s sensor_struct = {0};
+
+  TEST_ASSERT_FALSE(sensor_node__send_sonars_over_can());
+}
+
+void test_sensor_node__handle_mia(void) {
+  gpio_s gpio = {0};
+
+  // First 10 Hz cycle is pass by
+  sensor_node__handle_mia();
+
+  uart_printf_ExpectAndReturn(UART__0, "driver missing\r\n", 0);
+  board_io__get_led0_ExpectAndReturn(gpio);
+  gpio__set_Expect(gpio);
+
+  // Second 10 Hz cycle triggers prints and gpio toggle
+  sensor_node__handle_mia();
+}
+
+void test_sensor_node__handle_multiple_driver_heartbeat_messages_over_can(void) {
+  gpio_s gpio = {0};
+  can__msg_t msg = {0};
+  msg.msg_id = dbc_header_DRIVER_HEARTBEAT.message_id;
+  msg.frame_fields.data_len = dbc_header_DRIVER_HEARTBEAT.message_dlc;
+
+  // Heartbeat found
+  can__rx_ExpectAndReturn(can1, NULL, 0, true);
+  can__rx_IgnoreArg_can_message_ptr();
+  can__rx_ReturnThruPtr_can_message_ptr(&msg);
+
+  uart_printf_ExpectAndReturn(UART__0, "sensor sync\r\n", 0);
+  board_io__get_led0_ExpectAndReturn(gpio);
+  gpio__reset_Expect(gpio);
+
+  // Heartbeat found
+  can__rx_ExpectAndReturn(can1, NULL, 0, true);
+  can__rx_IgnoreArg_can_message_ptr();
+  can__rx_ReturnThruPtr_can_message_ptr(&msg);
+
+  // other message found
+  can__msg_t msg2 = {0};
+  can__rx_ExpectAndReturn(can1, NULL, 0, true);
+  can__rx_IgnoreArg_can_message_ptr();
+  can__rx_ReturnThruPtr_can_message_ptr(&msg2);
+
+  can__rx_ExpectAndReturn(can1, NULL, 0, false);
+  can__rx_IgnoreArg_can_message_ptr();
+
+  sensor_node__handle_messages_over_can();
+}
