@@ -51,6 +51,17 @@ void sensor_node__handle_mia(void) {
   }
 }
 
+static void sensor_node__handle_driver_heartbeat_message(const dbc_message_header_t *header,
+                                                         const uint8_t can_msg_data_bytes[8]) {
+  if (dbc_decode_DRIVER_HEARTBEAT(&can_msg__driver_heartbeat, *header, can_msg_data_bytes)) {
+    if (!sensor_node__is_sync) {
+      puts("sensor sync\r\n");
+      sensor_node__is_sync = true;
+      gpio__reset(board_io__get_led0());
+    }
+  }
+}
+
 void sensor_node__handle_messages_over_can(void) {
   can__msg_t can_msg = {0};
 
@@ -61,14 +72,7 @@ void sensor_node__handle_messages_over_can(void) {
         .message_dlc = can_msg.frame_fields.data_len,
     };
 
-    // make this a seperate heartbeat handle message function
-    if (dbc_decode_DRIVER_HEARTBEAT(&can_msg__driver_heartbeat, header, can_msg.data.bytes)) {
-      if (!sensor_node__is_sync) {
-        puts("sensor sync\r\n");
-        sensor_node__is_sync = true;
-        gpio__reset(board_io__get_led0());
-      }
-    }
+    sensor_node__handle_driver_heartbeat_message(&header, can_msg.data.bytes);
   }
 }
 

@@ -7,7 +7,7 @@
 
 #include "tesla_model_rc.h"
 
-#include "can_bus_configurations.h"
+#include "can_bus_mia_configurations.h"
 
 #include "sensor_node.c"
 

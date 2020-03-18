@@ -3,7 +3,7 @@
 
 const uint32_t dbc_mia_threshold_DRIVER_HEARTBEAT = 2 * 100;
 
-const dbc_DRIVER_HEARTBEAT_s dbc_mia_replacement_DRIVER_HEARTBEAT = {0};
+const dbc_DRIVER_HEARTBEAT_s dbc_mia_replacement_DRIVER_HEARTBEAT;
 
 bool dbc_send_can_message(void *argument_from_dbc_encode_and_send, uint32_t message_id, const uint8_t bytes[8],
                           uint8_t dlc) {
