@@ -2,8 +2,6 @@
 
 #include <math.h>
 
-#include "uart_printf.h"
-
 #include "sys_time.h"
 
 /**

@@ -1,7 +1,8 @@
 #include "sensor_node.h"
 
+#include <stdio.h>
+
 #include "board_io.h"
-#include "uart_printf.h"
 #include "ultrasonic.h"
 
 #include "can_bus.h"
@@ -44,7 +45,7 @@ void sensor_node__handle_mia(void) {
   const uint32_t mia_increment_value = 100;
 
   if (dbc_service_mia_DRIVER_HEARTBEAT(&can_msg__driver_heartbeat, mia_increment_value)) {
-    uart_printf(UART__0, "driver missing\r\n"); // use printf
+    printf("driver missing\r\n");
     sensor_node__is_sync = false;
     gpio__set(board_io__get_led0());
   }
@@ -63,19 +64,16 @@ void sensor_node__handle_messages_over_can(void) {
     // make this a seperate heartbeat handle message function
     if (dbc_decode_DRIVER_HEARTBEAT(&can_msg__driver_heartbeat, header, can_msg.data.bytes)) {
       if (!sensor_node__is_sync) {
-        uart_printf(UART__0, "sensor sync\r\n"); // use printf
+        puts("sensor sync\r\n");
         sensor_node__is_sync = true;
         gpio__reset(board_io__get_led0());
       }
     }
-
   }
 }
 
 // remove when done testing
-void sensor_node__print_ultrasonic_data(void) {
-  uart_printf(UART__0, "distance: %u\r\n", (unsigned int)front_ultrasonic.distance); // use printf
-}
+void sensor_node__print_ultrasonic_data(void) { printf("distance: %u\r\n", (unsigned int)front_ultrasonic.distance); }
 
 // remove when done testing
 void sensor_node__collect_ultrasonic_data(void) { ultrasonic__get_range(&front_ultrasonic); }

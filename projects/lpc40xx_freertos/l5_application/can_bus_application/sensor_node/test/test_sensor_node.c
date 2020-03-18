@@ -3,7 +3,6 @@
 #include "Mockboard_io.h"
 #include "Mockcan_bus.h"
 #include "Mockgpio.h"
-#include "Mockuart_printf.h"
 #include "Mockultrasonic.h"
 
 #include "tesla_model_rc.h"
@@ -64,7 +63,6 @@ void test_sensor_node__handle_mia(void) {
   // First 10 Hz cycle is pass by
   sensor_node__handle_mia();
 
-  uart_printf_ExpectAndReturn(UART__0, "driver missing\r\n", 0);
   board_io__get_led0_ExpectAndReturn(gpio);
   gpio__set_Expect(gpio);
 
@@ -83,7 +81,6 @@ void test_sensor_node__handle_multiple_driver_heartbeat_messages_over_can(void) 
   can__rx_IgnoreArg_can_message_ptr();
   can__rx_ReturnThruPtr_can_message_ptr(&msg);
 
-  uart_printf_ExpectAndReturn(UART__0, "sensor sync\r\n", 0);
   board_io__get_led0_ExpectAndReturn(gpio);
   gpio__reset_Expect(gpio);
 
