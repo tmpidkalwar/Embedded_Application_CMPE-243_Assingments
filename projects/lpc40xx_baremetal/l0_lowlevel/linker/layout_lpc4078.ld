@@ -42,7 +42,7 @@ __top_ram_64k   = __base_ram_64k + LENGTH(ram_64k);
 __base_ram_32k = ORIGIN(ram_32k);
 __top_ram_32k  = __base_ram_32k + LENGTH(ram_32k);
 
-ENTRY(entry_point)
+ENTRY(main)
 
 SECTIONS
 {
@@ -145,7 +145,7 @@ SECTIONS
 }
 
 /* Stack is at the top of RAM64 unless explicitly defined by the user */
-PROVIDE(_estack = DEFINED(__user_stack_top) ? __user_stack_top : __top_ram_64k);
+PROVIDE(_intitial_stack_from_linked_image = DEFINED(__user_stack_top) ? __user_stack_top : __top_ram_64k);
 
 PROVIDE(_bdata_lma = LOADADDR(.data));
 PROVIDE(_bdata_vma = ADDR(.data));
