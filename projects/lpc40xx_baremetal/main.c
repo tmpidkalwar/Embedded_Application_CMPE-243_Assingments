@@ -1,12 +1,6 @@
 #include "gpio.h"
 #include "startup.h"
 
-// Function pointer type for void function
-typedef void (*function__void_f)(void);
-
-// The linker script: layout_lpc4078.ld informs of the stack memory
-extern void *_intitial_stack_from_linked_image;
-
 static void delay(void);
 
 int main(void) {
@@ -53,6 +47,13 @@ static void halt(void) {
  * // 'Reset Interrupt' is the boot location
  * PC = flash_memory[1];
  */
+
+// The linker script: layout_lpc4078.ld informs of the stack memory
+extern void *_intitial_stack_from_linked_image;
+
+// Function pointer type for void function
+typedef void (*function__void_f)(void);
+
 __attribute__((section(".interrupt_vector_table"))) const function__void_f interrupt_vector_table[] = {
     (function__void_f)&_intitial_stack_from_linked_image, // 0 ARM: Initial stack pointer
     (function__void_f)main, // 1 ARM: Initial program counter; your board will explode if you change this
