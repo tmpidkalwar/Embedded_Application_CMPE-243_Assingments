@@ -1,15 +1,13 @@
 import fsops
+import sys
+import env
+from environment_builder import EnvironmentBuilder
 
 Import("project_dirnode")
 
 sources = fsops.scan_tree(".")
 sources.source_filenodes, _ = fsops.filter_files(sources.source_filenodes)
 Export("sources")
-
-import sys
-import env
-from environment_builder import EnvironmentBuilder
-import fsops
 
 """
 CLI
