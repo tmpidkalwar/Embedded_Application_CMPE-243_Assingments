@@ -1,0 +1,39 @@
+This project demonstrates absolute minimum code that is needed to bring-up the Cortex-M4 CPU.
+
+## Newlib
+
+> Newlib is a C standard library implementation intended for use on embedded systems. It is a conglomeration of several library parts, all under free software licenses that make them easily usable on embedded products.
+
+There are a couple of settings at `env_arm` file of relevance:
+
+```
+    LINKFLAGS=[
+        "-nostartfiles",
+        "-specs=nano.specs",
+        "-specs=nosys.specs",
+    ],
+```
+
+### `-specs=nano.specs`
+
+This provides smaller footprint for C library functions like `printf()` or `malloc()`. Not linking with this option will result is larger code generated for your compiled image.
+
+For this sample project, when you use a standard library function like `puts()`, there will be notable differences in the compiled size. The difference may be even larger when using `malloc()` function.
+
+Using this option results in:
+```
+   text    data     bss     dec     hex filename
+   7252    2112      96    9460    24f4 _build_lpc40xx_baremetal/lpc40xx_baremetal.elf
+```
+
+Not using this option results in:
+```
+   text    data     bss     dec     hex filename
+   3024     100      28    3152     c50 _build_lpc40xx_baremetal/lpc40xx_baremetal.elf
+```
+
+### `-specs=nosys.specs`
+
+> Nosys library contains set of default syscall stubs, majority of the stubs just returns failure.
+
+This link option indicates that there is no "system", and hence the GCC will provide minimal, and default implementation for things like the `_write()` or `_sbrk()` functions.

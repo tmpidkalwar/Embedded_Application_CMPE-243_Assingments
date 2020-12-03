@@ -15,7 +15,6 @@ import fsops
 CLI
 """
 no_clang_format = GetOption("no_clang_format")
-no_unit_test = GetOption("no_unit_test")
 test_output = GetOption("test_output")
 timeout = GetOption("timeout")
 verbose = GetOption("verbose")
@@ -33,9 +32,7 @@ PROJECT_DIR = project_dirnode
 
 """ Build artifact nodes """
 VARIANT_DIR = Dir("#/_build_{}".format(PROJECT_DIR.name))
-UNIT_TEST_BUILD_DIR = VARIANT_DIR.Dir("test")
 AUTO_GENERATED_CODE_DIR = VARIANT_DIR.Dir("auto_generated")
-MOCK_DIR = project_dirnode.Dir("unittest_header_overrides")
 
 """
 Import build environment
