@@ -1,9 +1,7 @@
 #include <stdint.h>
 
+#include "lpc40xx.h"
 #include "startup.h"
-
-// #include "FreeRTOS.h"
-// #include "lpc40xx.h"
 
 static void startup__init_data_sram(void);
 static void startup__init_bss_sram(void);
@@ -18,7 +16,7 @@ void startup__initialize_ram(void) {
  * - http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0439b/BEHBJHIG.html
  */
 void startup__initialize_fpu(void) {
-  // SCB->CPACR |= (0xF << 20); // Set [23:20]
+  SCB->CPACR |= (0xF << 20); // Set [23:20]
 }
 
 void startup__initialize_interrupts(void) {
