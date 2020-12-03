@@ -1,12 +1,10 @@
 import fsops
 
 Import("project_dirnode")
-
 sources = SConscript("subsidiary_scons")
-
 Export("sources")
-import sys
 
+import sys
 import env
 from environment_builder import EnvironmentBuilder
 import fsops
@@ -15,8 +13,6 @@ import fsops
 CLI
 """
 no_clang_format = GetOption("no_clang_format")
-test_output = GetOption("test_output")
-timeout = GetOption("timeout")
 verbose = GetOption("verbose")
 
 """
@@ -32,7 +28,6 @@ PROJECT_DIR = project_dirnode
 
 """ Build artifact nodes """
 VARIANT_DIR = Dir("#/_build_{}".format(PROJECT_DIR.name))
-AUTO_GENERATED_CODE_DIR = VARIANT_DIR.Dir("auto_generated")
 
 """
 Import build environment
