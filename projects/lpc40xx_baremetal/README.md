@@ -14,6 +14,16 @@ There are a couple of settings at `env_arm` file of relevance:
     ],
 ```
 
+### `-nostartfiles`
+
+We don't have a loader to initialize our C program (e.g. loader that comes prepackaged with an OS) so we need to write the logic to initialize RAM ourselves.
+
+GNU documentation states that:
+
+> Do not use the standard system startup files when linking. The standard system libraries are used normally, unless -nostdlib or -nodefaultlibs is used.
+
+See this [Stack Overlow post](https://stackoverflow.com/a/29429820/12254460)
+
 ### `-specs=nano.specs`
 
 This provides smaller footprint for C library functions like `printf()` or `malloc()`. Not linking with this option will result is larger code generated for your compiled image.

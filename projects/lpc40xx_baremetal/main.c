@@ -2,10 +2,21 @@
 #include "startup.h"
 
 static void delay(void);
+static void halt(void);
 
+/**
+ * On a non hosted environment, we actually do not really need the 'main' function
+ * We control exactly where CPU begins its first instructions at interrupt_vector_table[] array below.
+ *
+ * Note:
+ * Heap memory facility is not setup. If you use 'malloc()' or uses an API that does, such as FreeRTOS API
+ * then you would need to provide your own glue code for malloc() to invoke _sbrk() function mentioned below.
+ * You are welcome to reference sbrk.c at the lpc40xx_freertos project
+ */
 int main(void) {
-  // This has to be done otherwise initial values of RAM variables will not be setup correctly
-  // Remember that *data section needs to be copied from Flash to RAM to initialize global variables
+  /* This has to be done otherwise initial values of RAM variables will not be setup correctly
+   * Remember that *data* section needs to be copied from Flash to RAM to initialize global variables
+   */
   startup__initialize_ram();
 
   // led0 is on the stack memory, hence CPU SP needs to be setup
@@ -34,6 +45,29 @@ static void halt(void) {
   }
 }
 
+/* These 'Platform Glue' functions may be needed if you use malloc() or standard output (printf)
+ * Please uncomment, and provide your own implementation; @see libc.pdf
+ */
+#if 0
+int _write() { return 0; }
+int _read() { return 0; }
+
+int _fstat() { return 0; }
+int _isatty() { return 0; }
+int _lseek() { return 0; }
+int _close() { return 0; }
+
+int _sbrk() { return 0; }
+#endif
+
+/* The linker script: layout_lpc4078.ld informs of the stack memory
+ * This is named as '_estack' for consistency with GNU
+ */
+extern void *_estack;
+
+// Function pointer type for void function
+typedef void (*function__void_f)(void);
+
 /**
  * ARM processor starts the executing by doing this in Verilog code
  *
@@ -47,16 +81,9 @@ static void halt(void) {
  * // 'Reset Interrupt' is the boot location
  * PC = flash_memory[1];
  */
-
-// The linker script: layout_lpc4078.ld informs of the stack memory
-extern void *_intitial_stack_from_linked_image;
-
-// Function pointer type for void function
-typedef void (*function__void_f)(void);
-
 __attribute__((section(".interrupt_vector_table"))) const function__void_f interrupt_vector_table[] = {
-    (function__void_f)&_intitial_stack_from_linked_image, // 0 ARM: Initial stack pointer
-    (function__void_f)main, // 1 ARM: Initial program counter; your board will explode if you change this
+    (function__void_f)&_estack, // 0 ARM: Initial stack pointer
+    (function__void_f)main,     // 1 ARM: Initial program counter; your board will explode if you change this
 
     /* Note that we only have 16 interrupt vectors, and not the NXP LPC40xx peripheral interrupts
      * This is just done for demonstration of absolute minimal bare-metal project which does not
