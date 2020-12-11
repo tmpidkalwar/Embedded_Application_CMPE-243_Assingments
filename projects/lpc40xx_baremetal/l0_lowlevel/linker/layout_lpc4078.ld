@@ -58,11 +58,20 @@ SECTIONS
     } > ram_main
 }
 
+/* Peripheral RAM can be dedicated for the heap - sbrk() function */
 _heap_start = ORIGIN(ram_peripheral);
 _heap_end = ORIGIN(ram_peripheral) + LENGTH(ram_peripheral);
-_bdata_lma = LOADADDR(.data);
-_bdata_vma = ADDR(.data);
+
+/* If Peripheral RAM runs out, we could start to allocate RAM from the end of BSS section */
+_start_of_unused_ram64 = _bss_end;
+_end_of_unused_ram64 = ORIGIN(ram_main) + LENGTH(ram_main);
+
+/* Entry-point stack pointer is at the top of the RAM */
 _estack = ORIGIN(ram_main) + LENGTH(ram_main);
-__start_of_unused_ram64 = _bss_end;
-__end_of_unused_ram64 = ORIGIN(ram_main) + LENGTH(ram_main);
+
+/* These symbols provide addresses of data we need to copy from ROM to RAM 
+ * which provides initial values to the global variables
+ */
+_bdata_load_memory_address = LOADADDR(.data);
+_bdata_virtual_memory_address = ADDR(.data);
 

@@ -1,5 +1,9 @@
 This project demonstrates absolute minimum code that is needed to bring-up the Cortex-M4 CPU.
 
+Build this project with: `scons --project=lpc40xx_baremetal --no-float-format`
+
+If you get an error, such as `undefined reference to '_sbrk'`, then you either use `--no-float-format` or you may be using a C library function that relies on `malloc()`. In this case, you need to reference `sbrk.c` implementation from the `lpc40xx_freertos` project.
+
 ## Newlib
 
 > Newlib is a C standard library implementation intended for use on embedded systems. It is a conglomeration of several library parts, all under free software licenses that make them easily usable on embedded products.

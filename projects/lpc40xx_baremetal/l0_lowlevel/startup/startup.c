@@ -47,12 +47,12 @@ void startup__initialize_interrupts(void) {
 }
 
 static void startup__init_data_sram(void) {
-  extern void *_bdata_lma;
-  extern void *_bdata_vma;
+  extern void *_bdata_load_memory_address;
+  extern void *_bdata_virtual_memory_address;
   extern void *_data_end;
 
-  uint8_t *src_flash = (uint8_t *)&_bdata_lma; // Flash
-  uint8_t *dest_ram = (uint8_t *)&_bdata_vma;  // RAM
+  const uint8_t *src_flash = (uint8_t *)&_bdata_load_memory_address; // Flash
+  uint8_t *dest_ram = (uint8_t *)&_bdata_virtual_memory_address;     // RAM
   while (dest_ram < (uint8_t *)&_data_end) {
     *dest_ram = *src_flash;
     dest_ram++;

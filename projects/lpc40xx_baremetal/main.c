@@ -5,7 +5,7 @@ static void delay(void);
 static void halt(void);
 
 /**
- * On a non hosted environment, we actually do not really need the 'main' function
+ * On a 'non-hosted environment', we actually do not really need the 'main' function.
  * We control exactly where CPU begins its first instructions at interrupt_vector_table[] array below.
  *
  * Note:
