@@ -47,7 +47,7 @@ def main():
         if os.path.isdir(log_output) or "." not in os.path.basename(log_output):
             log_filepath = os.path.join(log_output, log_filename)
         else:
-            log_filepath = output
+            log_filepath = log_output
 
         logging.basicConfig(filename=log_filepath, level=logging.DEBUG)
 
