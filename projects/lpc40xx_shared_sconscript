@@ -95,6 +95,5 @@ if not no_unit_test:
 Symbol table
 """
 if not no_symbol_table:
-    for elf_filenode in artifacts.elf_filenode:
-        symbol_table_generator_results = env_arm.SymbolTableGenerator(source=elf_filenode, target=SYMBOL_TABLE_DIR)
-        Depends(symbol_table_generator_results, artifacts.elf_filenode)
+    symbol_table_generator_results = env_arm.SymbolTableGenerator(source=artifacts.elf_filenode, target=SYMBOL_TABLE_DIR)
+    Depends(symbol_table_generator_results, artifacts.elf_filenode)
