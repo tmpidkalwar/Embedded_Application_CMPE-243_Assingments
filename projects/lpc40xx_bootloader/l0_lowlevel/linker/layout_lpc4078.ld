@@ -4,12 +4,9 @@
  * - https://arobenko.gitbooks.io/bare_metal_cpp/content/
  */
 
-/* Use application_flash_offset=64k if using SD card bootloader; see lpc40xx_bootloader/README.md */
-application_flash_offset = 0k;
-
 MEMORY
 {
-  flash_512k (rx) : ORIGIN = 0x00000000 + application_flash_offset, LENGTH = 512k - application_flash_offset
+  flash_512k (rx) : ORIGIN = 0x00000000, LENGTH = 512K
   ram_64k (rwx)   : ORIGIN = 0x10000000, LENGTH = 64K   /* Main RAM       */
   ram_32k (rwx)   : ORIGIN = 0x20000000, LENGTH = 32K   /* Peripheral RAM */
 }
