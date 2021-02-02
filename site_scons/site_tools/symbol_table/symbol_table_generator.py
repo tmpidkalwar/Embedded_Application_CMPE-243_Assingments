@@ -151,7 +151,8 @@ class SymbolTableGenerator(object):
             }
             if "unsigned" in data_type:
                 sign = "u"
-            data_type = size_to_data_type_map[data_size]
+            if "uint8_t" != data_type:
+                data_type = size_to_data_type_map[data_size]
         elif data_type in ["float", "double"]:
             # IEEE 754: float: 4 bytes
             # IEEE 754: double: 8 bytes
@@ -178,8 +179,20 @@ class SymbolTableGenerator(object):
         symbol_offset_list.reverse()
 
         if symbol_offset_list:
-            # we found the root
-            symbol_type = self._get_description(symbol_offset_list[0], "DW_AT_name")
+            # SPECIAL CASE: uint8_t
+            symbol_type = None
+            for symbol_offset in symbol_offset_list:
+                special_type = self._get_description(symbol_offset, "DW_AT_name")
+                if "uint8_t" == special_type:
+                    # iterate through offset tree to see if there exist "uint8_t"
+                    # use "uint8_t" instead of base type
+                    symbol_type = special_type
+                    break
+
+            if symbol_type is None:
+                # default get base type
+                symbol_type = self._get_description(symbol_offset_list[0], "DW_AT_name")
+
             symbol_size = self._get_description(symbol_offset_list[0], "DW_AT_byte_size")
 
             if self._is_tag_type(symbol_offset_list, self._is_struct_or_union):
