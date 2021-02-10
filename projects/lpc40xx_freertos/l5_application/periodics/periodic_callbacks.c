@@ -3,6 +3,7 @@
 
 #include "periodic_callbacks.h"
 
+#include "assignment_include.h"
 #include "board_io.h"
 #include "gpio.h"
 
@@ -18,8 +19,17 @@ void periodic_callbacks__initialize(void) {
 
 void periodic_callbacks__1Hz(uint32_t callback_count) {
   gpio__toggle(board_io__get_led0());
-  // Add your code here
+// Add your code here
+#if defined(enable_assgn1_part_2)
   switch_led_logic__run_once();
+#endif
+
+#if defined(enable_assgn1_part_3)
+  // On the fifth function call to this function, sleep for 1000ms
+  if (callback_count >= 5) {
+    vTaskDelay(1000);
+  }
+#endif
 }
 
 void periodic_callbacks__10Hz(uint32_t callback_count) {
