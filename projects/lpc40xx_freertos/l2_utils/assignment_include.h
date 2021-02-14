@@ -6,3 +6,8 @@
  *      execution, along with subparts of assignment enabling feature
  */
 
+/******************** Assignment 1: Periodic Scheduler ******************************/
+#define enable_assignment_1
+//#define enable_assgn1_part_1
+#define enable_assgn1_part_2
+//#define enable_assgn1_part_3
