@@ -8,12 +8,15 @@ void staticQueue__init(queue_s *queue, void *static_memory_for_queue, size_t sta
   }
   queue->queue_element_count = 0;
   queue->static_memory_size_in_bytes = static_memory_size_in_bytes;
+  queue->read_index = 0;
+  queue->write_index = 0;
 }
 
 bool staticQueue__push(queue_s *queue, uint8_t push_value) {
   if (queue->queue_element_count < queue->static_memory_size_in_bytes) {
-    queue->static_memory_for_queue[queue->queue_element_count] = push_value;
+    queue->static_memory_for_queue[queue->write_index] = push_value;
     queue->queue_element_count++;
+    queue->write_index = (queue->write_index + 1) % queue->static_memory_size_in_bytes;
     return true;
   }
   return false;
@@ -21,10 +24,8 @@ bool staticQueue__push(queue_s *queue, uint8_t push_value) {
 
 bool staticQueue__pop(queue_s *queue, uint8_t *pop_value_ptr) {
   if (queue->queue_element_count > 0) {
-    *pop_value_ptr = queue->static_memory_for_queue[0];
-    for (int i = 0; i < queue->queue_element_count - 1; i++) {
-      queue->static_memory_for_queue[i] = queue->static_memory_for_queue[i + 1];
-    }
+    *pop_value_ptr = queue->static_memory_for_queue[queue->read_index];
+    queue->read_index = (queue->read_index + 1) % queue->static_memory_size_in_bytes;
     queue->queue_element_count--;
     return true;
   }

@@ -10,7 +10,8 @@
 typedef struct {
   uint8_t queue_memory[100];
   size_t queue_elements_count;
-  // TODO: Add more members as needed
+  uint8_t read_index;
+  uint8_t write_index;
 } queue_s;
 
 // This should initialize all members of queue_s

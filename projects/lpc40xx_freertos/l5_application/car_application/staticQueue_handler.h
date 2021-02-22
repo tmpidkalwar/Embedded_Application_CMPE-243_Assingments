@@ -11,7 +11,8 @@ typedef struct {
   uint8_t *static_memory_for_queue;
   size_t static_memory_size_in_bytes;
   size_t queue_element_count;
-  // TODO: Add more members as needed
+  uint8_t read_index;
+  uint8_t write_index;
 } queue_s;
 
 /* Initialize the queue with user provided static memory
