@@ -3,6 +3,15 @@
 #include "board_io.h"
 #include "gpio.h"
 
+#include "assignment_include.h"
+
+#ifdef enable_assignment_4_gps_uart
+
+#include "uart.h"
+static char output_data = 'a';
+
+#endif
+
 /******************************************************************************
  * Your board will reset if the periodic function does not return within its deadline
  * For 1Hz, the function must return within 1000ms
@@ -13,8 +22,24 @@ void periodic_callbacks__initialize(void) {
 }
 
 void periodic_callbacks__1Hz(uint32_t callback_count) {
+
+#ifdef enable_assignment_4_gps_uart
+  // uart__put(UART__1, output_data, 100);
+
+  // char input = 0;
+
+  // if (uart__get(UART__1, &input, 2)) {
+  //   printf("Tx %c vs. Rx %c\n", output_data, input);
+  // }
+
+  // ++output_data;
+  // if (output_data > 'z') {
+  //   output_data = 'a';
+  // }
+#else
   gpio__toggle(board_io__get_led0());
   // Add your code here
+#endif
 }
 
 void periodic_callbacks__10Hz(uint32_t callback_count) {

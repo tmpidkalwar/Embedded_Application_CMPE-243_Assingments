@@ -6,3 +6,8 @@
  *      execution, along with subparts of assignment enabling feature
  */
 
+#pragma once
+
+//#define enable_assignment_4_gps_uart
+#define enable_assgn4_part_0
+//#define enable_assgn4_part_1
