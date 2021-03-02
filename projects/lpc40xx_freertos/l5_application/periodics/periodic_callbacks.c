@@ -1,3 +1,8 @@
+/**
+ * @file periodic_callback.c
+ * @brief This file include the APIs to handle callback configured at specific intervals using FreeRTOS scheduler.
+ */
+
 #include "periodic_callbacks.h"
 
 #include "board_io.h"

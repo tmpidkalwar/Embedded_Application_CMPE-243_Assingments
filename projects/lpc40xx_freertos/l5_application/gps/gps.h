@@ -1,4 +1,8 @@
-// @file gps.h
+/**
+ * @file gps.h
+ * @brief This file includes global variables and function declaration defined by gps.c
+ */
+
 #pragma once
 
 // Notice the simplicity of this module. This module is easily mockable and provides a very
@@ -13,7 +17,3 @@ void gps__init(void);
 void gps__run_once(void);
 
 gps_coordinates_t gps__get_coordinates(void);
-
-// void fake_gps__run_once(void);
-
-// void fake_gps__init(void);

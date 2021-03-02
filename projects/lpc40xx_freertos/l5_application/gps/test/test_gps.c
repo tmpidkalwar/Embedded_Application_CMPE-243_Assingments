@@ -1,12 +1,15 @@
-// TODO:
-// test_gps.c
+/**
+ * @file test_gps.c
+ * @brief This file includes all unit test case implementation testing all APIs of 
+ *      gps.c file. 
+ * 
+ */
 #include "unity.h"
 
 // Mocks
 #include "Mockclock.h"
 #include "Mockgpio.h"
 #include "Mockuart.h"
-
 #include "Mockqueue.h"
 
 // Use the real implementation (not mocks) for:
@@ -112,7 +115,7 @@ void test_GPGGA_coordinates_are_parsed(void) {
 }
 
 void test_GPGGA_incomplete_line(void) {
-  char gps_line[] = "$GPGGA,hhmmss.ss,1111.11,a,2222.22,a,x,xx,x.x,x.x,M,x.x,M,x.x";
+  char gps_line[] = "$GPGGA,hhmmss.ss,1111.22,a,2222.11,a,x,xx,x.x,x.x,M,x.x,M,x.x";
   char *ptr;
   size_t index;
   for (index = 0; index < strlen(gps_line); index++) {
@@ -131,46 +134,42 @@ void test_GPGGA_incomplete_line(void) {
 
   gps_coordinates_t got_gps_coordinate = gps__get_coordinates();
 
-  // printf("coordinates got %f %f", got_gps_coordinate.latitude, got_gps_coordinate.longitude);
-  TEST_ASSERT_EQUAL_FLOAT((float)0.0, got_gps_coordinate.latitude);
-  TEST_ASSERT_EQUAL_FLOAT((float)0.0, got_gps_coordinate.longitude);
+  TEST_ASSERT_NOT_EQUAL((float)1111.22, got_gps_coordinate.latitude);
+  TEST_ASSERT_NOT_EQUAL((float)2222.11, got_gps_coordinate.longitude);
 }
 
-// void test_gps_line_parsing_while_buffer_overflow(void) {
-//   char gps_line[] = "$GPGGA,hhmmss.ss,1111.11,a,2222.22,a,x,xx,x.x,x.x,M,x.x,M,x.x";
-//   int index = 0;
-//   while (index < strlen(gps_line)) {
-//     line_buffer__add_byte(&line, gps_line[index]);
-//     index++;
-//   }
-//   // As 200 is max size of buffer, keep 30 character for testing.
-//   int buffer_fill_remaining_count = 100 - index;
-//   char dummy = "z";
-//   while (buffer_fill_remaining_count > 0) {
-//     line_buffer__add_byte(&line, dummy);
-//     buffer_fill_remaining_count--;
-//   }
-//   printf("write_index is %ld\n", line.element_count);
-//   // iterate for remaining space of 30
-//   char gps_line1[] = "$GPGGA,hhmmss.ss,1111.11,a,2222.22,a,x,xx,x.x,x.x,M";
-//   char *ptr;
-//   for (index = 0; index < strlen(gps_line1); index++) {
-//     char the_char_to_return = gps_line1[index];
-//     bool last_char = true;
-//     uart__get_ExpectAndReturn(UART__2, ptr, 0, last_char);
-//     uart__get_IgnoreArg_input_byte();
-//     uart__get_ReturnThruPtr_input_byte(&the_char_to_return);
+void test_gps_line_parsing_while_buffer_overflow(void) {
+  test_init();
+  // Fill buffer to 180 element without '\n' character to simulate buffer overflow
+  char gps_line[] = "$GPGGA,hhmmss.ss,1111.11,a,2222.22,a,x,xx,x.x,x.x,M,x.x,M,xx$GPGGA,hhmmss.ss,1111.11,a,2222.22,a,"
+                    "x,xx,x.x,x.x,M,x.x,M,xx$GPGGA,hhmmss.ss,1111.11,a,2222.22,a,x,xx,x.x,x.x,M,x.x,M,xx";
+  int index = 0;
+  while (index < strlen(gps_line)) {
+    line_buffer__add_byte(&line, gps_line[index]);
+    index++;
+  }
 
-//     last_char = false;
-//     uart__get_ExpectAndReturn(UART__2, ptr, 0, last_char);
-//     uart__get_IgnoreArg_input_byte();
+  printf("write_index is %ld\n", line.element_count);
+  // Now when we start filling buffer again, it will reach max limit and vacate the data to line buffer
+  // That line bufffer should get parsed to have updated coordinates
+  char gps_line1[] = "$GPGGA,hhmmss.ss,1111.11,a,2222.22,a,x,xx,x.x,x.x,M";
+  char *ptr;
+  for (index = 0; index < strlen(gps_line1); index++) {
+    char the_char_to_return = gps_line1[index];
+    bool last_char = true;
+    uart__get_ExpectAndReturn(UART__2, ptr, 0, last_char);
+    uart__get_IgnoreArg_input_byte();
+    uart__get_ReturnThruPtr_input_byte(&the_char_to_return);
 
-//     gps__run_once();
-//     printf("write_index is %ld\n", line.element_count);
-//   }
-//   gps_coordinates_t got_gps_coordinate = gps__get_coordinates();
+    last_char = false;
+    uart__get_ExpectAndReturn(UART__2, ptr, 0, last_char);
+    uart__get_IgnoreArg_input_byte();
 
-//   // printf("coordinates got %f %f", got_gps_coordinate.latitude, got_gps_coordinate.longitude);
-//   TEST_ASSERT_EQUAL_FLOAT((float)1111.11, got_gps_coordinate.latitude);
-// }
-void test_more_that_you_think_you_need(void) {}
+    gps__run_once();
+    printf("write_index is %ld\n", line.element_count);
+  }
+  gps_coordinates_t got_gps_coordinate = gps__get_coordinates();
+
+  // printf("coordinates got %f %f", got_gps_coordinate.latitude, got_gps_coordinate.longitude);
+  TEST_ASSERT_EQUAL_FLOAT((float)1111.11, got_gps_coordinate.latitude);
+}

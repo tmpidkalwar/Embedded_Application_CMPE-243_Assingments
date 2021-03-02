@@ -1,4 +1,9 @@
-#include "fake_gps.h" // TODO: You need to create this module, unit-tests for this are optional
+/**
+ * @file fake_gps.c
+ * @brief This file is responsible for simulating GPS module, which send GPS string over UART.
+ */
+
+#include "fake_gps.h"
 
 #include "stdio.h"
 
@@ -13,7 +18,6 @@
 
 #include "gpio.h"
 
-// Change this according to which UART you plan to use
 static uart_e fake_gps_uart = UART__1;
 
 void fake_gps__init(void) {

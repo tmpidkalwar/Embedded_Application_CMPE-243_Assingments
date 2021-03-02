@@ -1,4 +1,9 @@
-// @file gps.c
+/**
+ * @file gps.c
+ * @brief This file will contain all APIs to manage received GPS data over UART interface. This file 
+ *      takes input from UART buffer and output to line buffer (line buffer responsible for parsing each valid GPS string line by line)
+ */
+
 #include "gps.h"
 
 #include "stdio.h"
@@ -15,9 +20,8 @@
 
 #include "clock.h" // needed for UART initialization
 
-#include "gpio.h"
+#include "gpio.h"  // needed for configuring UART gpio
 
-// Change this according to which UART you plan to use
 static const uart_e gps_uart = UART__2;
 
 // Space for the line buffer, and the line buffer data structure instance
@@ -67,9 +71,9 @@ static void gps__transfer_data_from_uart_driver_to_line_buffer(void) {
 
   while (uart__get(gps_uart, &byte, zero_timeout)) {
     line_buffer__add_byte(&line, byte);
-    printf("%c", byte);
+    // printf("%c", byte);
   }
-  printf("\n");
+  // printf("\n");
 }
 
 static void gps__parse_GPGGA_line(char *gps_line) {
@@ -90,10 +94,7 @@ static void gps__parse_coordinates_from_line(void) {
   if (line_buffer__remove_line(&line, gps_line, sizeof(gps_line))) {
 
     gps__parse_GPGGA_line(gps_line);
-    printf("%f, %f\n", parsed_coordinates.latitude, parsed_coordinates.longitude);
-  } else {
-    parsed_coordinates.latitude = 0.0;
-    parsed_coordinates.longitude = 0.0;
+     printf("%f, %f\n", parsed_coordinates.latitude, parsed_coordinates.longitude);
   }
 }
 
@@ -114,8 +115,6 @@ void gps__init(void) {
   uart__enable_queues(gps_uart, rxq_handle, txq_handle);
 }
 
-/// Public functions:
-///
 void gps__run_once(void) {
   gps__transfer_data_from_uart_driver_to_line_buffer();
   gps__parse_coordinates_from_line();
