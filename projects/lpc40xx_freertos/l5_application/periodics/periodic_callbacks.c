@@ -5,6 +5,9 @@
 
 #include "assignment_include.h"
 
+#include "fake_gps.h"
+#include "gps.h"
+
 #ifdef enable_assignment_4_gps_uart
 
 #include "uart.h"
@@ -19,6 +22,8 @@ static char output_data = 'a';
  */
 void periodic_callbacks__initialize(void) {
   // This method is invoked once when the periodic tasks are created
+  gps__init();
+  fake_gps__init();
 }
 
 void periodic_callbacks__1Hz(uint32_t callback_count) {
@@ -38,12 +43,14 @@ void periodic_callbacks__1Hz(uint32_t callback_count) {
   // }
 #else
   gpio__toggle(board_io__get_led0());
+  fake_gps__run_once();
   // Add your code here
 #endif
 }
 
 void periodic_callbacks__10Hz(uint32_t callback_count) {
   gpio__toggle(board_io__get_led1());
+  gps__run_once();
   // Add your code here
 }
 void periodic_callbacks__100Hz(uint32_t callback_count) {

@@ -5,6 +5,7 @@
 
 #include "board_io.h"
 #include "common_macros.h"
+#include "periodic_callbacks.h"
 #include "periodic_scheduler.h"
 #include "sj2_cli.h"
 
@@ -17,6 +18,8 @@ static void uart_task(void *params);
 int main(void) {
   create_blinky_tasks();
   create_uart_task();
+  const size_t stack_size_bytes = 2048 / sizeof(void *);
+  periodic_scheduler__initialize(stack_size_bytes, false);
 
   // If you have the ESP32 wifi module soldered on the board, you can try uncommenting this code
   // See esp32/README.md for more details

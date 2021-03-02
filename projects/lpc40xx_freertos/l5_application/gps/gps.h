@@ -13,3 +13,7 @@ void gps__init(void);
 void gps__run_once(void);
 
 gps_coordinates_t gps__get_coordinates(void);
+
+// void fake_gps__run_once(void);
+
+// void fake_gps__init(void);

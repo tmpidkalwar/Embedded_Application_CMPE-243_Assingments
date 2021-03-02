@@ -4,6 +4,7 @@
 
 // Mocks
 #include "Mockclock.h"
+#include "Mockgpio.h"
 #include "Mockuart.h"
 
 #include "Mockqueue.h"
@@ -24,8 +25,12 @@ void test_init(void) {
   uint32_t clock_value;
   clock__get_peripheral_clock_hz_ExpectAndReturn(clock_value);
   uart__init_Expect(UART__2, clock_value, 38400);
+  gpio_s uart_tx_gpio = {GPIO__PORT_0, 10};
+  gpio_s uart_rx_gpio = {GPIO__PORT_0, 11};
+  gpio__construct_with_function_ExpectAndReturn(GPIO__PORT_0, 10, GPIO__FUNCTION_1, uart_tx_gpio);
+  gpio__construct_with_function_ExpectAndReturn(GPIO__PORT_0, 11, GPIO__FUNCTION_1, uart_rx_gpio);
   QueueHandle_t rx_queue_handle;
-  xQueueCreate_ExpectAndReturn(50, sizeof(char), rx_queue_handle);
+  xQueueCreate_ExpectAndReturn(100, sizeof(char), rx_queue_handle);
   QueueHandle_t tx_queue_handle;
   xQueueCreate_ExpectAndReturn(8, sizeof(char), tx_queue_handle);
   uint32_t retVal = true;

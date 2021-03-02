@@ -1,6 +1,8 @@
 // @file gps.c
 #include "gps.h"
 
+#include "stdio.h"
+
 // Our 'private' modules: We hide and abstract away these details from the user
 // Whoever #includes "Mockgps.h" will not need to deal with these because
 // these are included in this source file rather than the header file
@@ -12,6 +14,8 @@
 #include "queue.h"
 
 #include "clock.h" // needed for UART initialization
+
+#include "gpio.h"
 
 // Change this according to which UART you plan to use
 static const uart_e gps_uart = UART__2;
@@ -63,7 +67,9 @@ static void gps__transfer_data_from_uart_driver_to_line_buffer(void) {
 
   while (uart__get(gps_uart, &byte, zero_timeout)) {
     line_buffer__add_byte(&line, byte);
+    printf("%c", byte);
   }
+  printf("\n");
 }
 
 static void gps__parse_GPGGA_line(char *gps_line) {
@@ -84,6 +90,7 @@ static void gps__parse_coordinates_from_line(void) {
   if (line_buffer__remove_line(&line, gps_line, sizeof(gps_line))) {
 
     gps__parse_GPGGA_line(gps_line);
+    printf("%f, %f\n", parsed_coordinates.latitude, parsed_coordinates.longitude);
   } else {
     parsed_coordinates.latitude = 0.0;
     parsed_coordinates.longitude = 0.0;
@@ -94,9 +101,15 @@ void gps__init(void) {
   line_buffer__init(&line, line_buffer, sizeof(line_buffer));
   uart__init(gps_uart, clock__get_peripheral_clock_hz(), 38400);
 
+  const uint8_t gps_tx_pin = 10;
+  const uint8_t gps_rx_pin = 11;
+
+  gpio__construct_with_function(GPIO__PORT_0, gps_tx_pin, GPIO__FUNCTION_1);
+  gpio__construct_with_function(GPIO__PORT_0, gps_rx_pin, GPIO__FUNCTION_1);
+
   // RX queue should be sized such that can buffer data in UART driver until gps__run_once() is called
   // Note: Assuming 38400bps, we can get 4 chars per ms, and 40 chars per 10ms (100Hz)
-  QueueHandle_t rxq_handle = xQueueCreate(50, sizeof(char));
+  QueueHandle_t rxq_handle = xQueueCreate(100, sizeof(char));
   QueueHandle_t txq_handle = xQueueCreate(8, sizeof(char)); // We don't send anything to the GPS
   uart__enable_queues(gps_uart, rxq_handle, txq_handle);
 }
@@ -106,6 +119,7 @@ void gps__init(void) {
 void gps__run_once(void) {
   gps__transfer_data_from_uart_driver_to_line_buffer();
   gps__parse_coordinates_from_line();
+  // printf("Receiving GPS coordinates \n");
 }
 
 gps_coordinates_t gps__get_coordinates(void) { return parsed_coordinates; }
