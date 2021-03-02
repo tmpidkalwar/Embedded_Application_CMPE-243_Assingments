@@ -1,16 +1,16 @@
 /**
  * @file test_gps.c
- * @brief This file includes all unit test case implementation testing all APIs of 
- *      gps.c file. 
- * 
+ * @brief This file includes all unit test case implementation testing all APIs of
+ *      gps.c file.
+ *
  */
 #include "unity.h"
 
 // Mocks
 #include "Mockclock.h"
 #include "Mockgpio.h"
-#include "Mockuart.h"
 #include "Mockqueue.h"
+#include "Mockuart.h"
 
 // Use the real implementation (not mocks) for:
 #include "line_buffer.h"
@@ -44,7 +44,7 @@ void test_init(void) {
 void test_GPGLL_line_is_ignored(void) {
   char gps_line[] = "$GPGLL,1111.11,a,2222.22,a,hhmmss.ss,A\r\n";
   char *ptr;
-  for (size_t index = 0; index < strlen(gps_line) - 1; index++) {
+  for (size_t index = 0; index < strlen(gps_line); index++) {
     char the_char_to_return = gps_line[index];
     bool last_char = true;
     uart__get_ExpectAndReturn(UART__2, ptr, 0, last_char);
@@ -57,17 +57,6 @@ void test_GPGLL_line_is_ignored(void) {
 
     gps__run_once();
   }
-  char the_char_to_return = '\n';
-  bool last_char = true;
-  uart__get_ExpectAndReturn(UART__2, ptr, 0, last_char);
-  uart__get_IgnoreArg_input_byte();
-  uart__get_ReturnThruPtr_input_byte(&the_char_to_return);
-
-  last_char = false;
-  uart__get_ExpectAndReturn(UART__2, ptr, 0, last_char);
-  uart__get_IgnoreArg_input_byte();
-
-  gps__run_once();
 
   gps_coordinates_t got_gps_coordinate = gps__get_coordinates();
 
@@ -81,7 +70,7 @@ void test_GPGGA_coordinates_are_parsed(void) {
 
   char gps_line[] = "$GPGGA,hhmmss.ss,1111.11,a,2222.22,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx*hh\r\n";
   char *ptr;
-  for (size_t index = 0; index < strlen(gps_line) - 1; index++) {
+  for (size_t index = 0; index < strlen(gps_line); index++) {
 
     char the_char_to_return = gps_line[index];
     bool last_char = true;
@@ -95,17 +84,6 @@ void test_GPGGA_coordinates_are_parsed(void) {
 
     gps__run_once();
   }
-  char the_char_to_return = '\n';
-  bool last_char = true;
-  uart__get_ExpectAndReturn(UART__2, ptr, 0, last_char);
-  uart__get_IgnoreArg_input_byte();
-  uart__get_ReturnThruPtr_input_byte(&the_char_to_return);
-
-  last_char = false;
-  uart__get_ExpectAndReturn(UART__2, ptr, 0, last_char);
-  uart__get_IgnoreArg_input_byte();
-
-  gps__run_once();
 
   gps_coordinates_t got_gps_coordinate = gps__get_coordinates();
 

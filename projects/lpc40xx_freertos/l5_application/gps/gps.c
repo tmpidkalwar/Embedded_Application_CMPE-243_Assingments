@@ -1,7 +1,8 @@
 /**
  * @file gps.c
- * @brief This file will contain all APIs to manage received GPS data over UART interface. This file 
- *      takes input from UART buffer and output to line buffer (line buffer responsible for parsing each valid GPS string line by line)
+ * @brief This file will contain all APIs to manage received GPS data over UART interface. This file
+ *      takes input from UART buffer and output to line buffer (line buffer responsible for parsing each valid GPS
+ * string line by line)
  */
 
 #include "gps.h"
@@ -20,7 +21,7 @@
 
 #include "clock.h" // needed for UART initialization
 
-#include "gpio.h"  // needed for configuring UART gpio
+#include "gpio.h" // needed for configuring UART gpio
 
 static const uart_e gps_uart = UART__2;
 
@@ -94,7 +95,7 @@ static void gps__parse_coordinates_from_line(void) {
   if (line_buffer__remove_line(&line, gps_line, sizeof(gps_line))) {
 
     gps__parse_GPGGA_line(gps_line);
-     printf("%f, %f\n", parsed_coordinates.latitude, parsed_coordinates.longitude);
+    printf("%f, %f\n", parsed_coordinates.latitude, parsed_coordinates.longitude);
   }
 }
 
