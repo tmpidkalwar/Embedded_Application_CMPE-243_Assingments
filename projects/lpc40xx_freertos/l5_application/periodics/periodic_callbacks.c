@@ -1,7 +1,24 @@
+/**
+ * @file periodic_callback.c
+ * @brief This file include the APIs to handle callback configured at specific intervals using FreeRTOS scheduler.
+ */
+
 #include "periodic_callbacks.h"
 
 #include "board_io.h"
 #include "gpio.h"
+
+#include "assignment_include.h"
+
+#include "fake_gps.h"
+#include "gps.h"
+
+#ifdef enable_assignment_4_gps_uart
+
+#include "uart.h"
+static char output_data = 'a';
+
+#endif
 
 /******************************************************************************
  * Your board will reset if the periodic function does not return within its deadline
@@ -10,15 +27,35 @@
  */
 void periodic_callbacks__initialize(void) {
   // This method is invoked once when the periodic tasks are created
+  gps__init();
+  fake_gps__init();
 }
 
 void periodic_callbacks__1Hz(uint32_t callback_count) {
+
+#ifdef enable_assignment_4_gps_uart
+  // uart__put(UART__1, output_data, 100);
+
+  // char input = 0;
+
+  // if (uart__get(UART__1, &input, 2)) {
+  //   printf("Tx %c vs. Rx %c\n", output_data, input);
+  // }
+
+  // ++output_data;
+  // if (output_data > 'z') {
+  //   output_data = 'a';
+  // }
+#else
   gpio__toggle(board_io__get_led0());
+  fake_gps__run_once();
   // Add your code here
+#endif
 }
 
 void periodic_callbacks__10Hz(uint32_t callback_count) {
   gpio__toggle(board_io__get_led1());
+  gps__run_once();
   // Add your code here
 }
 void periodic_callbacks__100Hz(uint32_t callback_count) {
