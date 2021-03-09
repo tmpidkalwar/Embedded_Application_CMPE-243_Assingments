@@ -1,6 +1,8 @@
 #include "unity.h"
 
+#include "Mockboard_io.h"
 #include "Mockcan_bus.h"
+#include "Mockgpio.h"
 
 #include "can_bus_initializer.h"
 

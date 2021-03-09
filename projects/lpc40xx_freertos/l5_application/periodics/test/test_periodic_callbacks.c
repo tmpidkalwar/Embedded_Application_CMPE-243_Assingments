@@ -30,11 +30,15 @@ void test__periodic_callbacks__1Hz(void) {
   periodic_callbacks__1Hz(0);
 }
 
-void test__periodic_callbacks__100Hz_success_can_tx(void) {
+void test__periodic_callbacks__100Hz_success_can_tx_with_switch_press(void) {
 #ifdef CAN_AS_TX
   can__msg_t msg = {};
-  can__tx_ExpectAndReturn(can1, &msg, 5, true);
+  can__tx_ExpectAndReturn(can1, &msg, 1, true);
   can__tx_IgnoreArg_can_message_ptr();
+  get_switch2_status_ExpectAndReturn(true);
+  msg.data.qword = 0x1122334455667788;
+  can__tx_ReturnThruPtr_can_message_ptr(&msg);
+  clear_switch2_status_Expect();
   gpio_s gpio = {};
   board_io__get_led2_ExpectAndReturn(gpio);
   gpio__toggle_Expect(gpio);
@@ -42,12 +46,15 @@ void test__periodic_callbacks__100Hz_success_can_tx(void) {
 
 #ifdef CAN_AS_RX
   can__msg_t msg = {};
-  can__rx_ExpectAndReturn(can1, &msg, 5, true);
+
+  msg.data.qword = 0x1122334455667788;
+  can__rx_ExpectAndReturn(can1, &msg, 1, true);
   can__rx_IgnoreArg_can_message_ptr();
+  can__rx_ReturnThruPtr_can_message_ptr(&msg);
   gpio_s gpio = {};
   board_io__get_led3_ExpectAndReturn(gpio);
   gpio__toggle_Expect(gpio);
-  can__rx_ExpectAndReturn(can1, &msg, 5, false);
+  can__rx_ExpectAndReturn(can1, &msg, 1, false);
   can__rx_IgnoreArg_can_message_ptr();
 #endif
   periodic_callbacks__100Hz(0);
@@ -56,8 +63,9 @@ void test__periodic_callbacks__100Hz_success_can_tx(void) {
 void test__periodic_callbacks__100Hz_fail_can_tx(void) {
 #ifdef CAN_AS_TX
   can__msg_t msg = {};
-  can__tx_ExpectAndReturn(can1, &msg, 5, false);
+  can__tx_ExpectAndReturn(can1, &msg, 1, false);
   can__tx_IgnoreArg_can_message_ptr();
+  get_switch2_status_ExpectAndReturn(false);
   periodic_callbacks__100Hz(0);
 #endif
 }

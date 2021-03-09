@@ -1,6 +1,9 @@
 #include <stdio.h>
 
 #include "FreeRTOS.h"
+#include "can_bus_initializer.h"
+#include "lpc40xx.h"
+#include "lpc_peripherals.h"
 #include "task.h"
 
 #include "board_io.h"
@@ -17,12 +20,18 @@ static void uart_task(void *params);
 int main(void) {
   create_blinky_tasks();
   create_uart_task();
+  gpio_s gpio_switch = board_io__get_sw2();
+  gpio__set_as_input(gpio_switch);
+  lpc_peripheral__enable_interrupt(LPC_PERIPHERAL__GPIO, switch2_press_handler, "Switch2 pressed");
+  LPC_GPIOINT->IO0IntEnR |= (1 << 30);
+  // NVIC_EnableIRQ(GPIO_IRQn);
+  // gpio
 
   // If you have the ESP32 wifi module soldered on the board, you can try uncommenting this code
   // See esp32/README.md for more details
-  // uart3_init();                                                                     // Also include:  uart3_init.h
+  // uart3_init();                                                                     // Also include: uart3_init.h
   // xTaskCreate(esp32_tcp_hello_world_task, "uart3", 1000, NULL, PRIORITY_LOW, NULL); // Include esp32_task.h
-  const size_t stack_size_bytes = 2048 / sizeof(void *);
+  const size_t stack_size_bytes = 4096 / sizeof(void *);
   periodic_scheduler__initialize(stack_size_bytes, false);
   puts("Starting RTOS");
   vTaskStartScheduler(); // This function never returns unless RTOS scheduler runs out of memory and fails
