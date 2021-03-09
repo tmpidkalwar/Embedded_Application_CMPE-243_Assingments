@@ -3,6 +3,8 @@
 #include "board_io.h"
 #include "gpio.h"
 
+#include "can_bus_initializer.h"
+
 /******************************************************************************
  * Your board will reset if the periodic function does not return within its deadline
  * For 1Hz, the function must return within 1000ms
@@ -10,6 +12,7 @@
  */
 void periodic_callbacks__initialize(void) {
   // This method is invoked once when the periodic tasks are created
+  can_bus_initializer__can1_init();
 }
 
 void periodic_callbacks__1Hz(uint32_t callback_count) {
@@ -22,6 +25,9 @@ void periodic_callbacks__10Hz(uint32_t callback_count) {
   // Add your code here
 }
 void periodic_callbacks__100Hz(uint32_t callback_count) {
+
+  // can__tx()
+
   gpio__toggle(board_io__get_led2());
   // Add your code here
 }

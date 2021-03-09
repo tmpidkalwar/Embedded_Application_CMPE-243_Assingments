@@ -7,6 +7,7 @@
 // - This will not pull the REAL source code of these modules (such as board_io.c)
 // - This will auto-generate "Mock" versions based on the header file
 #include "Mockboard_io.h"
+#include "Mockcan_bus_initializer.h"
 #include "Mockgpio.h"
 
 // Include the source we wish to test
@@ -16,7 +17,10 @@ void setUp(void) {}
 
 void tearDown(void) {}
 
-void test__periodic_callbacks__initialize(void) { periodic_callbacks__initialize(); }
+void test__periodic_callbacks__initialize(void) {
+  can_bus_initializer__can1_init_ExpectAndReturn(true);
+  periodic_callbacks__initialize();
+}
 
 void test__periodic_callbacks__1Hz(void) {
   gpio_s gpio = {};
