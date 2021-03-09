@@ -12,7 +12,7 @@ void test_init(void) {}
 
 void test_can_bus_initializer__can1_init(void) {
   can_void_func_t dummy_func;
-  can__init_ExpectAndReturn(can1, 100, 100, 100, dummy_func, dummy_func, true);
+  can__init_ExpectAndReturn(can1, 100, 1000, 100, dummy_func, dummy_func, true);
   can__init_IgnoreArg_bus_off_cb();
   can__init_IgnoreArg_data_ovr_cb();
   can__bypass_filter_accept_all_msgs_Expect();

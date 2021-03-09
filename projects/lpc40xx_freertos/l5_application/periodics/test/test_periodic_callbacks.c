@@ -7,6 +7,7 @@
 // - This will not pull the REAL source code of these modules (such as board_io.c)
 // - This will auto-generate "Mock" versions based on the header file
 #include "Mockboard_io.h"
+#include "Mockcan_bus.h"
 #include "Mockcan_bus_initializer.h"
 #include "Mockgpio.h"
 
@@ -27,4 +28,36 @@ void test__periodic_callbacks__1Hz(void) {
   board_io__get_led0_ExpectAndReturn(gpio);
   gpio__toggle_Expect(gpio);
   periodic_callbacks__1Hz(0);
+}
+
+void test__periodic_callbacks__100Hz_success_can_tx(void) {
+#ifdef CAN_AS_TX
+  can__msg_t msg = {};
+  can__tx_ExpectAndReturn(can1, &msg, 5, true);
+  can__tx_IgnoreArg_can_message_ptr();
+  gpio_s gpio = {};
+  board_io__get_led2_ExpectAndReturn(gpio);
+  gpio__toggle_Expect(gpio);
+#endif
+
+#ifdef CAN_AS_RX
+  can__msg_t msg = {};
+  can__rx_ExpectAndReturn(can1, &msg, 5, true);
+  can__rx_IgnoreArg_can_message_ptr();
+  gpio_s gpio = {};
+  board_io__get_led3_ExpectAndReturn(gpio);
+  gpio__toggle_Expect(gpio);
+  can__rx_ExpectAndReturn(can1, &msg, 5, false);
+  can__rx_IgnoreArg_can_message_ptr();
+#endif
+  periodic_callbacks__100Hz(0);
+}
+
+void test__periodic_callbacks__100Hz_fail_can_tx(void) {
+#ifdef CAN_AS_TX
+  can__msg_t msg = {};
+  can__tx_ExpectAndReturn(can1, &msg, 5, false);
+  can__tx_IgnoreArg_can_message_ptr();
+  periodic_callbacks__100Hz(0);
+#endif
 }
