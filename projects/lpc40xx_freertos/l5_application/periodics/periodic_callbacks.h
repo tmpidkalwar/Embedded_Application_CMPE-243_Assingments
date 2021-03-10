@@ -2,8 +2,8 @@
 
 #include <stdint.h>
 
-#define CAN_AS_TX
-//#define CAN_AS_RX
+//#define CAN_AS_TX
+#define CAN_AS_RX
 typedef void (*periodic_callbacks_f)(uint32_t);
 
 /**
