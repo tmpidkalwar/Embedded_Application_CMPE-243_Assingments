@@ -5,4 +5,3 @@
  * @brief This file maintains the macro defined to enable specific assignment implementation for
  *      execution, along with subparts of assignment enabling feature
  */
-
