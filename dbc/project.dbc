@@ -43,6 +43,12 @@ BO_ 200 SENSOR_SONARS: 4 SENSOR
  SG_ SENSOR_SONARS_right : 10|10@1+ (1,0) [0|0] "inch" DRIVER
  SG_ SENSOR_SONARS_middle : 20|10@1+ (1,0) [0|0] "inch" DRIVER
 
+BO_ 300 SENSOR_ACCMTR : 4 SENSOR 
+ SG_ SENSOR_ACCMTR_x : 0|16@1- (1,0) [0|0] "x-axis" DRIVER
+ SG_ SENSOR_ACCMTR_y : 16|16@1- (1,0) [0|0] "y-axis" DRIVER
+
+BO_ 400 SENSOR_BUTTON : 1 SENSOR
+ SG_ SENSOR_BUTTON_bool : 0|1@1+ (1,0) [0|0] "" DRIVER
 
 CM_ BU_ DRIVER "The driver controller driving the car";
 CM_ BU_ MOTOR "The motor controller of the car";

@@ -17,7 +17,6 @@ static void uart_task(void *params);
 int main(void) {
   create_blinky_tasks();
   create_uart_task();
-
   // If you have the ESP32 wifi module soldered on the board, you can try uncommenting this code
   // See esp32/README.md for more details
   // uart3_init();                                                                     // Also include:  uart3_init.h
@@ -34,13 +33,12 @@ static void create_blinky_tasks(void) {
    * Use '#if (1)' if you wish to observe how two tasks can blink LEDs
    * Use '#if (0)' if you wish to use the 'periodic_scheduler.h' that will spawn 4 periodic tasks, one for each LED
    */
-#if (1)
+#if (0)
   // These variables should not go out of scope because the 'blink_task' will reference this memory
   static gpio_s led0, led1;
 
   led0 = board_io__get_led0();
   led1 = board_io__get_led1();
-
   xTaskCreate(blink_task, "led0", configMINIMAL_STACK_SIZE, (void *)&led0, PRIORITY_LOW, NULL);
   xTaskCreate(blink_task, "led1", configMINIMAL_STACK_SIZE, (void *)&led1, PRIORITY_LOW, NULL);
 #else
