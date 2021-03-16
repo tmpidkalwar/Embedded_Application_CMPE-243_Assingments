@@ -4,6 +4,9 @@
 
 typedef void (*periodic_callbacks_f)(uint32_t);
 
+#define CAN_RX
+//#define CAN_TX
+
 /**
  * @{
  * @name These callbacks are invoked by periodic_scheduler.c

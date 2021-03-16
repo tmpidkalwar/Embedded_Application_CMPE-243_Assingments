@@ -29,17 +29,20 @@ void test__periodic_callbacks__initialize(void) {
   periodic_callbacks__initialize();
 }
 
-void test__periodic_callbacks__1Hz(void) {
-  gpio_s gpio = {};
-  board_io__get_led0_ExpectAndReturn(gpio);
-  gpio__toggle_Expect(gpio);
-  periodic_callbacks__1Hz(0);
+void test__periodic_callbacks__1Hz(void) { periodic_callbacks__1Hz(0); }
+
+void test__periodic_callbacks__10Hz_can_receive_mode(void) {
+#ifdef CAN_RX
+  // can_handler__manage_mia_10hz_Expect();
+  can_handler__handle_all_incoming_messages_Expect();
+  can_handler__manage_mia_10hz_Expect();
+  periodic_callbacks__10Hz(0);
+#endif
 }
 
-// void test__periodic_callbacks__10Hz(void) {
-//   gpio_s gpio = {};
-//   can_handler__manage_mia_10hz_Expect();
-//   board_io__get_led1_ExpectAndReturn(gpio);
-//   gpio__toggle_Expect(gpio);
-//   periodic_callbacks__10Hz(0);
-// }
+void test__periodic_callbacks__10Hz_can_transmit_mode(void) {
+#ifdef CAN_TX
+  can_handler__transmit_message_10hz_Expect();
+  periodic_callbacks__10Hz(0);
+#endif
+}

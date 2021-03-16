@@ -4,6 +4,7 @@
 const uint32_t dbc_mia_threshold_SENSOR_ACCMTR = 3000; // 3000ms
 const uint32_t dbc_mia_threshold_SENSOR_BUTTON = 300;  // 300ms
 
+// Replacement values initialized to 0
 const dbc_SENSOR_ACCMTR_s dbc_mia_replacement_ACCMTR_values;
 const dbc_SENSOR_BUTTON_s dbc_mia_replacement_button;
 
@@ -14,8 +15,6 @@ bool can_mia__service_mia_SENSOR_ACCMTR(dbc_SENSOR_ACCMTR_s *can_msg_sensor_accm
     can_msg_sensor_accmtr->SENSOR_ACCMTR_x = dbc_mia_replacement_ACCMTR_values.SENSOR_ACCMTR_x;
     can_msg_sensor_accmtr->SENSOR_ACCMTR_y = dbc_mia_replacement_ACCMTR_values.SENSOR_ACCMTR_y;
     retValue = true;
-    // printf("hi\n");
   }
-  // printf("hello\n");
   return retValue;
 }
