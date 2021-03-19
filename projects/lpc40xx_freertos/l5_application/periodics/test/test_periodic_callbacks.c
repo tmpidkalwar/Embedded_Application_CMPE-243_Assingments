@@ -6,6 +6,7 @@
 // Include the Mocks
 // - This will not pull the REAL source code of these modules (such as board_io.c)
 // - This will auto-generate "Mock" versions based on the header file
+#include "Mockadc.h"
 #include "Mockboard_io.h"
 #include "Mockgpio.h"
 
@@ -22,5 +23,6 @@ void test__periodic_callbacks__1Hz(void) {
   gpio_s gpio = {};
   board_io__get_led0_ExpectAndReturn(gpio);
   gpio__toggle_Expect(gpio);
+  // adc__get_adc_value_ExpectAndReturn(ADC__CHANNEL_2, 0);
   periodic_callbacks__1Hz(0);
 }

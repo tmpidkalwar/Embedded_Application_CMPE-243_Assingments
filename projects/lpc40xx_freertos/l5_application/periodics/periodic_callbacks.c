@@ -1,7 +1,13 @@
+#include <stdio.h>
+
 #include "periodic_callbacks.h"
 
 #include "board_io.h"
 #include "gpio.h"
+
+#include "adc.h"
+
+static uint32_t current_adc_value;
 
 /******************************************************************************
  * Your board will reset if the periodic function does not return within its deadline
@@ -18,6 +24,9 @@ void periodic_callbacks__1Hz(uint32_t callback_count) {
 }
 
 void periodic_callbacks__10Hz(uint32_t callback_count) {
+  current_adc_value = adc__get_adc_value(ADC__CHANNEL_2);
+
+  fprintf(stderr, "%d\n", current_adc_value);
   gpio__toggle(board_io__get_led1());
   // Add your code here
 }

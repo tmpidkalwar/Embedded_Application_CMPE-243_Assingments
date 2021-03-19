@@ -8,6 +8,8 @@
 #include "periodic_scheduler.h"
 #include "sj2_cli.h"
 
+#include "adc.h"
+
 // 'static' to make these functions 'private' to this file
 static void create_blinky_tasks(void);
 static void create_uart_task(void);
@@ -17,6 +19,16 @@ static void uart_task(void *params);
 int main(void) {
   create_blinky_tasks();
   create_uart_task();
+  adc__initialize();
+
+  // Make Port 0 Pin 25 functionality as ADC0[2]
+  gpio__construct_with_function(0, 25, GPIO__FUNCTION_1);
+
+  // Set mode and analog input bits in control register
+  LPC_IOCON->P0_25 &= ~(0b11 << 3);
+
+  // Analog mode
+  LPC_IOCON->P0_25 &= ~(1 << 7);
 
   // If you have the ESP32 wifi module soldered on the board, you can try uncommenting this code
   // See esp32/README.md for more details
@@ -34,7 +46,7 @@ static void create_blinky_tasks(void) {
    * Use '#if (1)' if you wish to observe how two tasks can blink LEDs
    * Use '#if (0)' if you wish to use the 'periodic_scheduler.h' that will spawn 4 periodic tasks, one for each LED
    */
-#if (1)
+#if (0)
   // These variables should not go out of scope because the 'blink_task' will reference this memory
   static gpio_s led0, led1;
 
