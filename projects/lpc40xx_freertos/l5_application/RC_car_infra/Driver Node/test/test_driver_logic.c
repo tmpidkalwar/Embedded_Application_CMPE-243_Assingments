@@ -58,7 +58,7 @@ void test_steer_left_with_left_sens_val_less_than_min(void) {
 
 void test_not_to_steer_with_left_right_sensor_val_great_than_max(void) {
 
-  dbc_DRIVER_TO_MOTOR_s motor_signal; // = {.MOTOR_direction = 0, .MOTOR_speed = 0};
+  dbc_DRIVER_TO_MOTOR_s motor_signal = {.MOTOR_direction = 0, .MOTOR_speed = 0};
   // Assign some value to right and left sensor greater than max mapped value responsible to start steering
   sensor_recvd_values.SENSOR_SONARS_right = max_sensor_value_to_start_steering + 1;
   sensor_recvd_values.SENSOR_SONARS_left = max_sensor_value_to_start_steering + 1;
@@ -68,43 +68,46 @@ void test_not_to_steer_with_left_right_sensor_val_great_than_max(void) {
 }
 
 // Note: right steering angle values are in negative range
-// void test_steer_right_with_right_sens_val_less_than_max(void) {
+void test_steer_right_with_right_sens_val_less_than_max(void) {
 
-//   dbc_DRIVER_TO_MOTOR_s motor_signal; // = {.MOTOR_direction = 0, .MOTOR_speed = 0};
-//   // Assign some value to right sensor so that it will be always greater than left sensor value, to cause left
-//   steering sensor_recvd_values.SENSOR_SONARS_left = max_sensor_value_to_start_steering;
+  dbc_DRIVER_TO_MOTOR_s motor_signal; // = {.MOTOR_direction = 0, .MOTOR_speed = 0};
+  // Assign some value to right sensor so that it will be always greater than left sensor value, to cause left
+  // steering
+  sensor_recvd_values.SENSOR_SONARS_left = max_sensor_value_to_start_steering;
 
-//   // case 1: left sensor value very near to value start cauring left steer
-//   sensor_recvd_values.SENSOR_SONARS_right = max_sensor_value_to_start_steering - 1;
+  // case 1: left sensor value very near to value start cauring left steer
+  sensor_recvd_values.SENSOR_SONARS_right = max_sensor_value_to_start_steering - 1;
 
-//   motor_signal = driver_logic__get_motor_command();
-//   TEST_ASSERT_LESS_OR_EQUAL((min_angle * -1), motor_signal.MOTOR_direction);
-// }
+  motor_signal = driver_logic__get_motor_command();
+  TEST_ASSERT_LESS_OR_EQUAL((min_angle * -1), motor_signal.MOTOR_direction);
+}
 
-// // Note: left steering angle values are in negative range
-// void test_steer_right_with_right_sens_val_greater_than_min(void) {
+// Note: left steering angle values are in negative range
+void test_steer_right_with_right_sens_val_greater_than_min(void) {
 
-//   dbc_DRIVER_TO_MOTOR_s motor_signal = {.MOTOR_direction = 0, .MOTOR_speed = 0};
-//   // Assign some value to right sensor so that it will be always greater than left sensor value, to cause left
-//   steering sensor_recvd_values.SENSOR_SONARS_left = max_sensor_value_to_start_steering;
+  dbc_DRIVER_TO_MOTOR_s motor_signal = {.MOTOR_direction = 0, .MOTOR_speed = 0};
+  // Assign some value to right sensor so that it will be always greater than left sensor value, to cause left
+  // steering
+  sensor_recvd_values.SENSOR_SONARS_left = max_sensor_value_to_start_steering;
 
-//   // case 2: left sensor value in min and max range of values mapped to angle value
-//   sensor_recvd_values.SENSOR_SONARS_right = min_sensor_value_to_map_max_steering_angle + 1;
+  // case 2: left sensor value in min and max range of values mapped to angle value
+  sensor_recvd_values.SENSOR_SONARS_right = min_sensor_value_to_map_max_steering_angle + 1;
 
-//   motor_signal = driver_logic__get_motor_command();
-//   TEST_ASSERT_LESS_OR_EQUAL((min_angle * -1), motor_signal.MOTOR_direction);
-// }
+  motor_signal = driver_logic__get_motor_command();
+  TEST_ASSERT_LESS_OR_EQUAL((min_angle * -1), motor_signal.MOTOR_direction);
+}
 
-// // Note: left steering angle values are in negative range
-// void test_steer_right_with_right_sens_val_less_than_min(void) {
+// Note: left steering angle values are in negative range
+void test_steer_right_with_right_sens_val_less_than_min(void) {
 
-//   dbc_DRIVER_TO_MOTOR_s motor_signal = {.MOTOR_direction = 0, .MOTOR_speed = 0};
-//   // Assign some value to right sensor so that it will be always greater than left sensor value, to cause left
-//   steering sensor_recvd_values.SENSOR_SONARS_left = max_sensor_value_to_start_steering;
+  dbc_DRIVER_TO_MOTOR_s motor_signal = {.MOTOR_direction = 0, .MOTOR_speed = 0};
+  // Assign some value to right sensor so that it will be always greater than left sensor value, to cause left
+  // steering
+  sensor_recvd_values.SENSOR_SONARS_left = max_sensor_value_to_start_steering;
 
-//   // case 3: left sensor value less than min sensor value mapped to steering angle
-//   sensor_recvd_values.SENSOR_SONARS_right = min_sensor_value_to_map_max_steering_angle - 1;
+  // case 3: left sensor value less than min sensor value mapped to steering angle
+  sensor_recvd_values.SENSOR_SONARS_right = min_sensor_value_to_map_max_steering_angle - 1;
 
-//   motor_signal = driver_logic__get_motor_command();
-//   TEST_ASSERT_LESS_OR_EQUAL((min_angle * -1), motor_signal.MOTOR_direction);
-// }
+  motor_signal = driver_logic__get_motor_command();
+  TEST_ASSERT_LESS_OR_EQUAL((min_angle * -1), motor_signal.MOTOR_direction);
+}

@@ -3,6 +3,7 @@
  *
  *
  */
+#include <stdio.h>
 
 #include "driver_logic.h"
 
@@ -16,34 +17,43 @@ static dbc_SENSOR_SONARS_s sensor_recvd_values;
  * 800 => 5 degree
  * So constant is inverse ration of 40/500
  */
-const static long max_sensor_value_to_start_steering = 800;
-const static long min_sensor_value_to_map_max_steering_angle = 300;
-const static long min_angle = 5;
-const static long max_angle = 45;
+const static float max_sensor_value_to_start_steering = 800;
+const static float min_sensor_value_to_map_max_steering_angle = 300;
+const static float min_angle = 5;
+const static float max_angle = 45;
 
-const static float sensor_to_steer_angle_map_const =
-    (max_angle - min_angle) / (max_sensor_value_to_start_steering - min_sensor_value_to_map_max_steering_angle);
-
-static int8_t map(long input, long in_min, long in_max, long out_min, long out_max) {
+static int8_t map(long input, float in_min, float in_max, float out_min, float out_max) {
   return (input - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 static void steer_signal_to_avoid_obstacle(dbc_DRIVER_TO_MOTOR_s *motor_signals) {
+  motor_signals->MOTOR_direction = 0;
   if (sensor_recvd_values.SENSOR_SONARS_left < sensor_recvd_values.SENSOR_SONARS_right) {
-
+    uint16_t left_sensor = sensor_recvd_values.SENSOR_SONARS_left;
     if (sensor_recvd_values.SENSOR_SONARS_left < max_sensor_value_to_start_steering) {
 
-      if()
-      motor_signals->MOTOR_direction =
-          (int8_t)(sensor_to_steer_angle_map_const * sensor_recvd_values.SENSOR_SONARS_left);
+      if (sensor_recvd_values.SENSOR_SONARS_left < min_sensor_value_to_map_max_steering_angle) {
+        motor_signals->MOTOR_direction = 45;
+      } else {
+        motor_signals->MOTOR_direction = map(left_sensor, max_sensor_value_to_start_steering,
+                                             min_sensor_value_to_map_max_steering_angle, min_angle, max_angle);
+      }
     }
     fprintf(stderr, "i am here  %d\n", motor_signals->MOTOR_direction);
   } else {
 
-    if (sensor_recvd_values.SENSOR_SONARS_right < max_sensor_value_to_start_steering) {
-      motor_signals->MOTOR_direction =
-          (int8_t)((-1) * sensor_to_steer_angle_map_const * sensor_recvd_values.SENSOR_SONARS_right);
+    uint16_t right_sensor = sensor_recvd_values.SENSOR_SONARS_left;
+
+    if (sensor_recvd_values.SENSOR_SONARS_right < min_sensor_value_to_map_max_steering_angle) {
+      motor_signals->MOTOR_direction = (int8_t)((-1) * 45);
+    } else {
+      if (sensor_recvd_values.SENSOR_SONARS_right < max_sensor_value_to_start_steering) {
+        motor_signals->MOTOR_direction =
+            (int8_t)((-1) * map(right_sensor, max_sensor_value_to_start_steering,
+                                min_sensor_value_to_map_max_steering_angle, min_angle, max_angle));
+      }
     }
+    fprintf(stderr, "i am here in 2  %d\n", motor_signals->MOTOR_direction);
   }
 }
 
@@ -88,7 +98,10 @@ static void speed_control_to_avoid_obstacle(dbc_DRIVER_TO_MOTOR_s *motor_signals
   } else if (fwd_sens_val < fwd_sens_val_to_map_to_max_fwd_speed) {
 
     if (fwd_sens_val >= fwd_sens_val_to_start_fwd_moving_car) {
-      motor_signals->MOTOR_speed = sens_val_to_fwd_speed_map_const * fwd_sens_val;
+
+      motor_signals->MOTOR_speed =
+          map(fwd_sens_val, rear_sense_val_to_stop_reversing_car, rear_sense_val_to_map_to_max_reverse_speed,
+              min_reverse_speed, max_reverse_speed);
     } else if (fwd_sens_val > fwd_sens_val_to_start_reversing_car) {
       motor_signals->MOTOR_speed = min_fwd_speed;
     } else {
@@ -102,7 +115,10 @@ static void speed_control_to_avoid_obstacle(dbc_DRIVER_TO_MOTOR_s *motor_signals
     if (rear_sens_val >= rear_sense_val_to_map_to_max_reverse_speed) {
       motor_signals->MOTOR_speed = (float)(-12.5);
     } else if (rear_sens_val > rear_sense_val_to_stop_reversing_car) {
-      motor_signals->MOTOR_speed = (float)(rear_sens_val_to_reverse_speed_map_const * rear_sens_val);
+
+      motor_signals->MOTOR_speed =
+          map(rear_sens_val, rear_sense_val_to_stop_reversing_car, rear_sense_val_to_map_to_max_reverse_speed,
+              min_reverse_speed, max_reverse_speed);
     } else {
       motor_signals->MOTOR_speed = 0;
     }
