@@ -34,7 +34,8 @@ void periodic_callbacks__10Hz(uint32_t callback_count) {
 #endif
 
 #ifdef CAN_TX
-  can_handler__transmit_message_10hz();
+  // can_handler__transmit_message_10hz();
+  can_handler__transmit_sensor_accmtr_message_10hz();
 #endif
 
   // gpio__toggle(board_io__get_led1());

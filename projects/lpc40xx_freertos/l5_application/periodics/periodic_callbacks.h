@@ -4,8 +4,8 @@
 
 typedef void (*periodic_callbacks_f)(uint32_t);
 
-#define CAN_RX
-//#define CAN_TX
+//#define CAN_RX
+#define CAN_TX
 
 /**
  * @{
