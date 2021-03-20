@@ -13,3 +13,5 @@
  * motor understandable signals. It will run the obstacle avoidance logic.
  */
 dbc_DRIVER_TO_MOTOR_s driver_logic__get_motor_command(void);
+
+void driver_process_input(dbc_SENSOR_SONARS_s *sensor_data);

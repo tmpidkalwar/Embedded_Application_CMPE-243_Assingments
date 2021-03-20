@@ -38,25 +38,28 @@ static int8_t map(long input, float in_min, float in_max, float out_min, float o
 
 static void steer_signal_to_avoid_obstacle(dbc_DRIVER_TO_MOTOR_s *motor_signals) {
   motor_signals->MOTOR_direction = 0;
-  if (sensor_left < sensor_right) {
-    if (sensor_left < max_sensor_value_to_start_steering) {
+  if (sensor_recvd_values.SENSOR_SONARS_left < sensor_recvd_values.SENSOR_SONARS_right) {
+    uint16_t left_sensor = sensor_recvd_values.SENSOR_SONARS_left;
+    if (sensor_recvd_values.SENSOR_SONARS_left < max_sensor_value_to_start_steering) {
 
-      if (sensor_left < min_sensor_value_to_map_max_steering_angle) {
+      if (sensor_recvd_values.SENSOR_SONARS_left < min_sensor_value_to_map_max_steering_angle) {
         motor_signals->MOTOR_direction = 45;
       } else {
-        motor_signals->MOTOR_direction = map(sensor_left, max_sensor_value_to_start_steering,
+        motor_signals->MOTOR_direction = map(left_sensor, max_sensor_value_to_start_steering,
                                              min_sensor_value_to_map_max_steering_angle, min_angle, max_angle);
       }
     }
     fprintf(stderr, "i am here  %d\n", motor_signals->MOTOR_direction);
   } else {
 
-    if (sensor_right < min_sensor_value_to_map_max_steering_angle) {
+    uint16_t right_sensor = sensor_recvd_values.SENSOR_SONARS_left;
+
+    if (sensor_recvd_values.SENSOR_SONARS_right < min_sensor_value_to_map_max_steering_angle) {
       motor_signals->MOTOR_direction = (int8_t)((-1) * 45);
     } else {
-      if (sensor_right < max_sensor_value_to_start_steering) {
+      if (sensor_recvd_values.SENSOR_SONARS_right < max_sensor_value_to_start_steering) {
         motor_signals->MOTOR_direction =
-            (int8_t)((-1) * map(sensor_right, max_sensor_value_to_start_steering,
+            (int8_t)((-1) * map(right_sensor, max_sensor_value_to_start_steering,
                                 min_sensor_value_to_map_max_steering_angle, min_angle, max_angle));
       }
     }
