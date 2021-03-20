@@ -1,13 +1,12 @@
 /**
  * @file driver_logic.h
  * @brief This file includes the declaration for global parameters and functions
- *      involved in building driver node logic. 
+ *      involved in building driver node logic.
  */
 
 #pragma once
 
 #include "project.h"
-
 
 /**
  * This API will process the received sensor data to convert it to
