@@ -111,3 +111,70 @@ void test_steer_right_with_right_sens_val_less_than_min(void) {
   motor_signal = driver_logic__get_motor_command();
   TEST_ASSERT_LESS_OR_EQUAL((min_angle * -1), motor_signal.MOTOR_direction);
 }
+
+void test_fwd_speed_with_middle_sen_val_above_max_mapped_val(void) {
+
+  dbc_DRIVER_TO_MOTOR_s motor_signal = {.MOTOR_speed = 0, .MOTOR_direction = 0};
+
+  sensor_middle = fwd_sens_val_to_map_to_max_fwd_speed;
+
+  motor_signal = driver_logic__get_motor_command();
+  TEST_ASSERT_EQUAL(max_fwd_speed, motor_signal.MOTOR_speed);
+}
+
+void test_fwd_speed_with_middle_sen_val_betwn_max_mapped_val_and_start_fwd_move(void) {
+
+  dbc_DRIVER_TO_MOTOR_s motor_signal = {.MOTOR_speed = 0, .MOTOR_direction = 0};
+
+  sensor_middle = fwd_sens_val_to_map_to_max_fwd_speed - 2;
+
+  motor_signal = driver_logic__get_motor_command();
+  TEST_ASSERT_GREATER_THAN(min_fwd_speed, motor_signal.MOTOR_speed);
+}
+
+// Test the scenario when the car should be idle
+void test_fwd_speed_with_middle_sen_val_betwn_start_fwd_move_and_start_revers_car(void) {
+
+  dbc_DRIVER_TO_MOTOR_s motor_signal = {.MOTOR_speed = 0, .MOTOR_direction = 0};
+
+  sensor_middle = fwd_sens_val_to_start_fwd_moving_car - 2;
+
+  motor_signal = driver_logic__get_motor_command();
+  TEST_ASSERT_EQUAL(0, motor_signal.MOTOR_speed);
+}
+
+// Note: Reverse speed value is in negative range
+void test_rvrse_speed_with_rear_sens_val_above_max_mapped_val(void) {
+
+  dbc_DRIVER_TO_MOTOR_s motor_signal = {.MOTOR_speed = 0, .MOTOR_direction = 0};
+
+  sensor_middle = fwd_sens_val_to_start_reversing_car - 1;
+  sensor_rear = rear_sense_val_to_map_to_max_reverse_speed + 1;
+
+  motor_signal = driver_logic__get_motor_command();
+  TEST_ASSERT_EQUAL(((-1) * max_reverse_speed), motor_signal.MOTOR_speed);
+}
+
+// Note: Reverse speed value is in negative range
+void test_rvrse_speed_with_rear_sens_val_above_stop_rvrse_car(void) {
+
+  dbc_DRIVER_TO_MOTOR_s motor_signal = {.MOTOR_speed = 0, .MOTOR_direction = 0};
+
+  sensor_middle = fwd_sens_val_to_start_reversing_car - 1;
+  sensor_rear = rear_sense_val_to_stop_reversing_car + 100;
+
+  motor_signal = driver_logic__get_motor_command();
+  TEST_ASSERT_LESS_THAN(min_reverse_speed, motor_signal.MOTOR_speed);
+}
+
+// Note: Reverse speed value is in negative range
+void test_rvrse_speed_with_rear_sens_val_below_stop_rvrse_car(void) {
+
+  dbc_DRIVER_TO_MOTOR_s motor_signal = {.MOTOR_speed = 0, .MOTOR_direction = 0};
+
+  sensor_middle = fwd_sens_val_to_start_reversing_car - 1;
+  sensor_rear = rear_sense_val_to_stop_reversing_car;
+
+  motor_signal = driver_logic__get_motor_command();
+  TEST_ASSERT_EQUAL(min_reverse_speed, motor_signal.MOTOR_speed);
+}

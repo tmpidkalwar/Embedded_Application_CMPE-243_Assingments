@@ -13,6 +13,7 @@
 #include "Mockcan_bus.h"
 #include "Mockcan_bus_initializer.h"
 #include "Mockcan_handle_message_rx.h"
+#include "Mockcan_handle_message_tx.h"
 #include "periodic_callbacks.h"
 void setUp(void) {}
 
@@ -27,6 +28,7 @@ void test__periodic_callbacks__initialize(void) {
 
 void test__periodic_callbacks__10Hz(void) {
   gpio_s gpio = {};
-  handle_all_can_messages_rx_Expect(can1);
+  // handle_all_can_messages_rx_Expect(can1);
+  // handle_all_can_messages_tx_Expect(can1);
   periodic_callbacks__10Hz(0);
 }

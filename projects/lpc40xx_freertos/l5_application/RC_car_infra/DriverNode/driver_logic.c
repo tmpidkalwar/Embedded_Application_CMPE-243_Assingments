@@ -1,7 +1,7 @@
 /**
  * @file driver_logic.c
- *
- *
+ * @brief This file has the Driver Node processing logic implemented. It takes input from sensor node to
+ *      process it and convert in vehicle's speed and direction signals to trasmit to Motor node.
  */
 #include <stdio.h>
 
@@ -37,19 +37,18 @@ static int8_t map(long input, float in_min, float in_max, float out_min, float o
 }
 
 static void steer_signal_to_avoid_obstacle(dbc_DRIVER_TO_MOTOR_s *motor_signals) {
-  motor_signals->MOTOR_direction = 0;
+  // motor_signals->MOTOR_direction = 0;
+  fprintf(stderr, "steer_signal left_send = %d, right_send= %d\n", sensor_left, sensor_right);
   if (sensor_left < sensor_right) {
-    uint16_t left_sensor = sensor_left;
     if (sensor_left < max_sensor_value_to_start_steering) {
 
       if (sensor_left < min_sensor_value_to_map_max_steering_angle) {
         motor_signals->MOTOR_direction = 45;
       } else {
-        motor_signals->MOTOR_direction = map(left_sensor, max_sensor_value_to_start_steering,
+        motor_signals->MOTOR_direction = map(sensor_left, max_sensor_value_to_start_steering,
                                              min_sensor_value_to_map_max_steering_angle, min_angle, max_angle);
       }
     }
-    fprintf(stderr, "i am here  %d\n", motor_signals->MOTOR_direction);
   } else {
 
     uint16_t right_sensor = sensor_left;
@@ -63,7 +62,6 @@ static void steer_signal_to_avoid_obstacle(dbc_DRIVER_TO_MOTOR_s *motor_signals)
                                 min_sensor_value_to_map_max_steering_angle, min_angle, max_angle));
       }
     }
-    fprintf(stderr, "i am here in 2  %d\n", motor_signals->MOTOR_direction);
   }
 }
 
@@ -112,13 +110,14 @@ static void speed_control_to_avoid_obstacle(dbc_DRIVER_TO_MOTOR_s *motor_signals
   }
 
   if (start_reversing_car) {
+    start_reversing_car = false;
     if (sensor_rear >= rear_sense_val_to_map_to_max_reverse_speed) {
       motor_signals->MOTOR_speed = (float)(-12.5);
     } else if (sensor_rear > rear_sense_val_to_stop_reversing_car) {
 
       motor_signals->MOTOR_speed =
-          map(sensor_rear, rear_sense_val_to_stop_reversing_car, rear_sense_val_to_map_to_max_reverse_speed,
-              min_reverse_speed, max_reverse_speed);
+          ((-1) * map(sensor_rear, rear_sense_val_to_stop_reversing_car, rear_sense_val_to_map_to_max_reverse_speed,
+                      min_reverse_speed, max_reverse_speed));
     } else {
       motor_signals->MOTOR_speed = 0;
     }
@@ -126,7 +125,7 @@ static void speed_control_to_avoid_obstacle(dbc_DRIVER_TO_MOTOR_s *motor_signals
 }
 
 dbc_DRIVER_TO_MOTOR_s driver_logic__get_motor_command(void) {
-  dbc_DRIVER_TO_MOTOR_s motor_signals;
+  dbc_DRIVER_TO_MOTOR_s motor_signals = {.MOTOR_direction = 0, .MOTOR_speed = 0};
   steer_signal_to_avoid_obstacle(&motor_signals);
   speed_control_to_avoid_obstacle(&motor_signals);
   return motor_signals;
