@@ -21,7 +21,7 @@ bool dbc_send_can_message(void *argument, uint32_t message_id, const uint8_t byt
 void handle_all_can_messages_tx(can__num_e can_num) {
   dbc_DRIVER_TO_MOTOR_s motor_data = driver_logic__get_motor_command();
   if (dbc_encode_and_send_DRIVER_TO_MOTOR(NULL, &motor_data)) {
-    gpio__toggle(board_io__get_led0());
+    gpio__toggle(board_io__get_led2());
   } else {
     gpio__toggle(board_io__get_led1());
   }

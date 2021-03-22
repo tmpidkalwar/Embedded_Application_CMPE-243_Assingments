@@ -16,7 +16,7 @@ void test_success_can_msg_tx(void) {
   dbc_DRIVER_TO_MOTOR_s motor_data;
   driver_logic__get_motor_command_ExpectAndReturn(motor_data);
   gpio_s gpio;
-  board_io__get_led0_ExpectAndReturn(gpio);
+  board_io__get_led2_ExpectAndReturn(gpio);
   gpio__toggle_Expect(gpio);
   can__msg_t msg = {};
   can__tx_ExpectAndReturn(can1, &msg, 0, true);
