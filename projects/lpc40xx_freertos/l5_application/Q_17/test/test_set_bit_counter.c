@@ -19,3 +19,11 @@ void test_set_bit_counter_for_valid_number(void) {
 
   TEST_ASSERT_EQUAL(exp_ans, count_bits(value));
 }
+
+void test_set_bit_counter_for_all_32_bits_set(void) {
+  uint32_t value = 0xFFFFFFFF;
+
+  const uint32_t exp_ans = 32;
+
+  TEST_ASSERT_EQUAL(exp_ans, count_bits(value));
+}

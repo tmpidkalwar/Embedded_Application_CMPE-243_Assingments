@@ -6,7 +6,7 @@ uint32_t get_highest(const uint32_t *array, size_t array_size) {
   uint32_t highest = 0;
 
   // As size_t expands to unsigned long, array size will never be negative
-  if ((array == NULL) || (array_size == 0)) {
+  if ((array == NULL)) {
     return highest;
   }
 
