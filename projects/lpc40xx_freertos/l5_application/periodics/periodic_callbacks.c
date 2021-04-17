@@ -7,6 +7,8 @@
 
 #include "adc.h"
 
+#include "sens_val_conv.h"
+
 static uint32_t current_adc_value;
 
 /******************************************************************************
@@ -24,7 +26,7 @@ void periodic_callbacks__1Hz(uint32_t callback_count) {
 }
 
 void periodic_callbacks__10Hz(uint32_t callback_count) {
-  current_adc_value = adc__get_adc_value(ADC__CHANNEL_2);
+  current_adc_value = sens_val_conv__to_cm();
 
   fprintf(stderr, "%d\n", current_adc_value);
   gpio__toggle(board_io__get_led1());

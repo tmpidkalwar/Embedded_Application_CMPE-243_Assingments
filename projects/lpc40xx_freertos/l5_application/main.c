@@ -30,6 +30,8 @@ int main(void) {
   // Analog mode
   LPC_IOCON->P0_25 &= ~(1 << 7);
 
+  LPC_IOCON->P0_25 &= ~(3 << 3);
+
   // If you have the ESP32 wifi module soldered on the board, you can try uncommenting this code
   // See esp32/README.md for more details
   // uart3_init();                                                                     // Also include:  uart3_init.h
